@@ -1,14 +1,17 @@
 import pandas as pd
 import numpy as np
 from bs4 import BeautifulSoup
-import requests
 import re
 import argparse
 import os
 import pdb
+import sys
 from pathlib import Path
 
-class Scraper:
+sys.path.append('.')
+from scraper import Scraper
+
+class TeamScraper(Scraper):
 
     def __init__(self):
         self.table_names = [
@@ -26,19 +29,6 @@ class Scraper:
         'miscellaneous_stats'
         ]
 
-    def _request_fbref(self, url):
-        """
-        get soup from fbref.com
-
-        returns:
-            a dictionary with team names as keys and
-            corresponding urls as values
-        """
-        r = requests.get(url)
-        comm = re.compile("<!--|-->")
-        soup = BeautifulSoup(comm.sub("",r.text),'lxml')
-
-        return soup
 
     def scrape_teams_and_urls(self, soup):
         """
@@ -60,34 +50,7 @@ class Scraper:
             name = row.find('td',{"data-stat":"squad"}).text.strip().encode().decode("utf-8")
             url = row.find('td',{"data-stat":"squad"}).find('a')['href']
             result[name] = url
-        return result
-
-
-    def _scrape_table(self, table_soup, headers):
-        """
-        a method to scrape a table from fbref
-        takes:
-            soup containing a table
-            a list containing header names for each column
-
-        returns:
-            a dataframe containing all the data from the given table
-        """
-        result = []
-
-        rows = table_soup.find_all('tr')
-        for row in rows:
-            current_row = []
-            for cell in row:
-                current_row.append(cell.text.strip().encode().decode("utf-8"))
-            result.append(current_row)
-        try:
-            return pd.DataFrame(result, columns=headers)
-        except:
-            headers.insert(0,'Rk')
-            while len(headers) > len(result[0]):
-                headers = headers[1:]           
-            return pd.DataFrame(result, columns=headers) 
+        return result 
 
 
     def _get_league_headers(self, soup):
@@ -113,15 +76,6 @@ class Scraper:
                 r.append(cell.text.strip().encode().decode("utf-8"))
             h_list.append(r)
         return h_list
-
-
-    def _clean_soup(self, content):
-        """
-        what does this do I wrote this so long ago
-        """
-        for tags in content.find_all("tr", class_="over_header"):
-            tags.attrs = {}
-        return content
 
 
     def drop_top_headers(self, header_list):
@@ -159,7 +113,7 @@ class Scraper:
         tables = soup.find_all('tbody')
 
         headers = self._get_league_headers(soup)
-        headers = self.drop_top_headers(headers)
+        # headers = self.drop_top_headers(headers)
         headers[1].insert(1, 'comp')
         headers[-1].insert(0, 'Rk')
 
@@ -176,5 +130,5 @@ class Scraper:
 
 
 if __name__ == '__main__':
-    scraper = Scraper()
+    scraper = TeamScraper()
     scraper.main()

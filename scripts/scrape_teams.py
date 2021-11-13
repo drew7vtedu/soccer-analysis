@@ -3,11 +3,28 @@ import numpy as np
 from bs4 import BeautifulSoup
 import requests
 import re
+import argparse
+import os
+import pdb
+from pathlib import Path
 
-class scraper:
+class Scraper:
 
-    def __init__():
-        pass
+    def __init__(self):
+        self.table_names = [
+        'league_table',
+        'standard_stats',
+        'goalkeeping',
+        'advanced_goalkeeping',
+        'shooting',      
+        'passing',
+        'pass_types',
+        'goal_and_shot_creation',
+        'defensive_actions',
+        'possession',
+        'playing_time',
+        'miscellaneous_stats'
+        ]
 
     def _request_fbref(self, url):
         """
@@ -64,7 +81,13 @@ class scraper:
             for cell in row:
                 current_row.append(cell.text.strip().encode().decode("utf-8"))
             result.append(current_row)
-        return pd.DataFrame(result, columns=headers)
+        try:
+            return pd.DataFrame(result, columns=headers)
+        except:
+            headers.insert(0,'Rk')
+            while len(headers) > len(result[0]):
+                headers = headers[1:]           
+            return pd.DataFrame(result, columns=headers) 
 
 
     def _get_league_headers(self, soup):
@@ -77,7 +100,10 @@ class scraper:
         returns:
             a list containing all table column headers
         """
-        all_headers = soup.find_all('thead')
+        all_headers = []
+        for p in soup.find_all('thead'):
+            if p.class_!='over_header':
+                all_headers.append(p)
         h_list = []
 
         for i in all_headers:
@@ -117,5 +143,38 @@ class scraper:
         """
         Save a DataFrame to the given filename
         """
-        with open(f'../data/raw/{fname}.csv', 'w') as outfile:
-            df.to_csv(outfile)
+        path = f'data/raw/{fname}.csv'
+        mode = 'w'
+
+        myfile = Path(path)
+        myfile.touch(exist_ok=True)
+
+        with open(myfile, mode) as outfile:
+            df.to_csv(outfile, mode, index=False)
+
+    def main(self):
+        soup = self._request_fbref("https://fbref.com/en/comps/9/Premier-League-Stats")
+        team_urls = self.scrape_teams_and_urls(soup)
+        
+        tables = soup.find_all('tbody')
+
+        headers = self._get_league_headers(soup)
+        headers = self.drop_top_headers(headers)
+        headers[1].insert(1, 'comp')
+        headers[-1].insert(0, 'Rk')
+
+
+        for i in range(len(tables)):
+            if i % 2 == 0:
+                t = self._scrape_table(tables[i], headers[i])
+                # self.save_data(t, f"teams/{self.table_names[i // 2]}")
+                if i // 2 < len(self.table_names):
+                    t.to_csv(f"data/raw/teams/{self.table_names[i // 2]}.csv", index=False)
+                else:
+                    break
+        
+
+
+if __name__ == '__main__':
+    scraper = Scraper()
+    scraper.main()

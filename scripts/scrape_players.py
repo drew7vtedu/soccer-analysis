@@ -18,7 +18,7 @@ class PlayerScraper(Scraper):
         self.raw_data_path = 'data/raw/players/'
         self.proc_data_path = 'data/processed/'
 
-    def main(self, args):
+    def main(self):
         soup = self._request_fbref(self.args.fbref_url)
         team_urls = self.scrape_teams_and_urls(soup)
         for team in team_urls.keys():
@@ -45,7 +45,7 @@ class PlayerScraper(Scraper):
 if __name__ == '__main__':
     args = PlayerScraper.init_command_line_args().parse_args()
     scraper = PlayerScraper(args)
-    scraper.main(args.fbref_url)
+    scraper.main()
 
 
     

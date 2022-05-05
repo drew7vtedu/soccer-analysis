@@ -1,6 +1,6 @@
-DROP DATABASE IF EXISTS fplanalysis;
-CREATE DATABASE IF NOT EXISTS fplanalysis;
-USE fplanalysis;
+DROP DATABASE IF EXISTS soccer_data;
+CREATE DATABASE IF NOT EXISTS soccer_data;
+USE soccer_data;
 
 CREATE TABLE players_standard_stats (
     id INTEGER PRIMARY KEY,

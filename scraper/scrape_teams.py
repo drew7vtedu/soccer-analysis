@@ -5,7 +5,6 @@ import pdb
 import sys
 from pathlib import Path
 
-sys.path.append('.')
 from scraper import Scraper
 
 class TeamScraper(Scraper):
@@ -28,22 +27,18 @@ class TeamScraper(Scraper):
             df.to_csv(outfile, mode, index=False)
 
     def main(self, url):
-        soup = self._request_fbref(url)
+        soup = self._request_fbref_(url)
+        pdb.set_trace()
         
         tables = soup.find_all('tbody')
 
-        headers = self._get_all_headers(soup)
-        headers[1].insert(1, 'comp')
-        headers[-1].insert(0, 'Rk')
-
+        headers = self._get_all_headers_(soup)
+        # headers[1].insert(1, 'comp')
+        # headers[-1].insert(0, 'Rk')
 
         for i in range(len(tables)):
-            if i % 2 == 0:
-                t = self._scrape_table(tables[i], headers[i])
-                if i // 2 < len(self.table_names):
-                    t.to_csv(f"data/raw/teams/{self.table_names[i // 2]}.csv", index=False)
-                else:
-                    break
+            t = self._scrape_table_(tables[i], headers[i])
+            t.to_csv(f"{self.args.raw_data_path}/{self.table_names[i]}.csv", index=False)
         
 
 

@@ -15,7 +15,6 @@ for f in files:
         cols_to_use.insert(0, 'Squad')
         try:
             temp.reset_index()
-            # pdb.set_trace()
             result = result.merge(temp[cols_to_use], on='Squad', how='inner')
         except:
             print()

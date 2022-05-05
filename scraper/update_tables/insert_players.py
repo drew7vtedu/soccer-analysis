@@ -2,7 +2,7 @@ import pandas as pd
 import pdb
 import os
 import numpy as np
-import mysql.connector
+import pyodbc
 
 
 class PlayerInserter:

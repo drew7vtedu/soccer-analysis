@@ -1,3 +1,4 @@
+from bdb import set_trace
 import pandas as pd
 from bs4 import BeautifulSoup
 import requests
@@ -8,13 +9,10 @@ import pdb
 from pathlib import Path
 import sys
 
-sys.path.append('.')
-
 class Scraper:
 
     def __init__(self, args: object, **kwargs) -> None:
         self.args = args
-        self._init_kwargs(kwargs)
         self.table_names = [
         'standard_stats',
         'scores_and_fixtures',
@@ -41,13 +39,6 @@ class Scraper:
 
         return parser
 
-    def _init_kwargs(self, kwargs):
-        """
-        Overwrite this method in a subclass to add additional command line arguments
-        """
-        pass
-
-
     def scrape_teams_and_urls(self, soup):
         """
         a method to scrape team names and urls to find
@@ -70,7 +61,7 @@ class Scraper:
             result[name] = url
         return result 
 
-    def _request_fbref(self, url):
+    def _request_fbref_(self, url):
         """
         get soup from fbref.com
 
@@ -84,7 +75,7 @@ class Scraper:
 
         return soup
 
-    def _get_all_headers(self, soup):
+    def _get_all_headers_(self, soup):
         """
         a method to get all table headers from a league page
         with several tables
@@ -94,21 +85,76 @@ class Scraper:
         returns:
             a list containing all table column headers
         """
+        pdb.set_trace()
         all_headers = []
-        for p in soup.find_all('thead'):
-            if p.class_!='over_header':
-                all_headers.append(p)
-        h_list = []
+        for tabl_header in soup.find_all('thead'):
+            header_rows = tabl_header.find_all('tr')
+            if len(header_rows) == 2:
+                over_headers = []
+                # get over headers
+                for cell in header_rows[0].find_all('th'):
+                    try:
+                        colspan = int(cell.get('colspan'))
+                        text = cell.text.strip().encode().decode("utf-8")
+                        for i in range(colspan):
+                            over_headers.append(text)
+                    except:
+                        # this occurs when there is a single <th></th>
+                        over_headers.append('')
+                # add over headers to lower headers as prefix
+                lower_header = header_rows[1].find_all('th')
+                if len(over_headers) != len(lower_header):
+                    print(f'header row lengths do not match. upper: {len(over_headers)}, lewer: {len(lower_header)}')
+                row = []
+                for i in range(len(lower_header)):
+                    text = lower_header[i].text.strip().encode().decode("utf-8")
+                    if over_headers[i] != '':
+                        text = over_headers[i] + '_' + text
+                    row.append(text)
+                all_headers.append(row)
+            elif len(header_rows) == 1:
+                all_headers.append([x.text.strip().encode().decode("utf-8") for x in header_rows[0].find_all('th')])
+            elif len(header_rows > 2):
+                print('more than 2 rows')
+        
+        return all_headers
+        #     for tr in header_rows:
+        #         if tr.get('class') == 'over_header':
+        #             print('over')
 
-        for i in all_headers:
-            row = i.find_all('th')
-            r = []
-            for cell in row:
-                r.append(cell.text.strip().encode().decode("utf-8"))
-            h_list.append(r)
-        return h_list
+        # h_list = []
 
-    def _scrape_table(self, table_soup, headers):
+        # over_header_idxs = []
+        # for i in range(len(all_headers)):
+        #     row = all_headers[i].find_all('th')
+        #     r = []
+        #     for cell in row:
+        #         text = cell.text.strip().encode().decode("utf-8")
+        #         try:
+        #             cell_class = cell.get('class')[0]
+        #         except:
+        #             # this occurs when there is a single <th></th> which spans 1 col
+        #             cell_class = None
+
+        #         if cell_class == 'over_header' and i not in over_header_idxs:
+        #             over_header_idxs.append(i)
+        #             over_headers[i] = {}
+        #             over_headers[i]['colspan'] = int(cell.get('colspan'))
+        #             over_headers[i]['text'] = text
+        #         elif cell_class is not None:
+        #             r.append(text)
+        
+        # for idx in over_header_idxs:
+        #     print(idx)
+        #     for i in range(over_headers[idx]['colspan']):
+        #         temp = h_list[idx].pop(i)
+        #         if temp != '':
+        #             temp = '_' + temp
+        #         h_list[idx] = temp + h_list[idx][i]
+        # pdb.set_trace()
+        # return h_list
+
+    def _scrape_table_(self, table_soup, headers):
         """
         a method to scrape a table from fbref
         takes:
@@ -136,7 +182,7 @@ class Scraper:
 
 
         
-    def _clean_soup(self, content):
+    def _clean_soup_(self, content):
         """
         what does this do I wrote this so long ago
         """

@@ -85,7 +85,6 @@ class Scraper:
         returns:
             a list containing all table column headers
         """
-        pdb.set_trace()
         all_headers = []
         for tabl_header in soup.find_all('thead'):
             header_rows = tabl_header.find_all('tr')
@@ -97,62 +96,26 @@ class Scraper:
                         colspan = int(cell.get('colspan'))
                         text = cell.text.strip().encode().decode("utf-8")
                         for i in range(colspan):
-                            over_headers.append(text)
+                            over_headers.append(text.replace(' ', '_').lower())
                     except:
                         # this occurs when there is a single <th></th>
                         over_headers.append('')
                 # add over headers to lower headers as prefix
                 lower_header = header_rows[1].find_all('th')
-                if len(over_headers) != len(lower_header):
-                    print(f'header row lengths do not match. upper: {len(over_headers)}, lewer: {len(lower_header)}')
+                assert len(over_headers) == len(lower_header), f'header row lengths do not match. upper: {len(over_headers)}, lewer: {len(lower_header)}'
                 row = []
                 for i in range(len(lower_header)):
-                    text = lower_header[i].text.strip().encode().decode("utf-8")
+                    text = lower_header[i].text.strip().encode().decode("utf-8").replace(' ', '_').lower()
                     if over_headers[i] != '':
                         text = over_headers[i] + '_' + text
                     row.append(text)
                 all_headers.append(row)
             elif len(header_rows) == 1:
-                all_headers.append([x.text.strip().encode().decode("utf-8") for x in header_rows[0].find_all('th')])
+                all_headers.append([x.text.strip().encode().decode("utf-8").replace(' ', '_').lower() for x in header_rows[0].find_all('th')])
             elif len(header_rows > 2):
                 print('more than 2 rows')
         
         return all_headers
-        #     for tr in header_rows:
-        #         if tr.get('class') == 'over_header':
-        #             print('over')
-
-        # h_list = []
-
-        # over_header_idxs = []
-        # for i in range(len(all_headers)):
-        #     row = all_headers[i].find_all('th')
-        #     r = []
-        #     for cell in row:
-        #         text = cell.text.strip().encode().decode("utf-8")
-        #         try:
-        #             cell_class = cell.get('class')[0]
-        #         except:
-        #             # this occurs when there is a single <th></th> which spans 1 col
-        #             cell_class = None
-
-        #         if cell_class == 'over_header' and i not in over_header_idxs:
-        #             over_header_idxs.append(i)
-        #             over_headers[i] = {}
-        #             over_headers[i]['colspan'] = int(cell.get('colspan'))
-        #             over_headers[i]['text'] = text
-        #         elif cell_class is not None:
-        #             r.append(text)
-        
-        # for idx in over_header_idxs:
-        #     print(idx)
-        #     for i in range(over_headers[idx]['colspan']):
-        #         temp = h_list[idx].pop(i)
-        #         if temp != '':
-        #             temp = '_' + temp
-        #         h_list[idx] = temp + h_list[idx][i]
-        # pdb.set_trace()
-        # return h_list
 
     def _scrape_table_(self, table_soup, headers):
         """

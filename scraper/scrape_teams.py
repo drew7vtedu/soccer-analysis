@@ -11,7 +11,16 @@ class TeamScraper(Scraper):
 
     def __init__(self, args):
         super().__init__(args)
+        opponent_table_names = ['opponent_stats_' + x for x in self.table_names]
+        table_names = []
+        for tup in zip(self.table_names, opponent_table_names):
+            table_names.append(tup[0])
+            table_names.append(tup[1])
+        self.table_names = table_names
+        
         self.table_names.insert(0, 'league_table')
+        self.table_names.insert(1, 'home_away_league_table',)
+        pdb.set_trace()
     
     def save_data(self, df, fname):
         """

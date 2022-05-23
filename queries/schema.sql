@@ -1,6 +1,6 @@
-DROP DATABASE IF EXISTS premier_league_data;
-CREATE DATABASE IF NOT EXISTS premier_league_data;
-USE premier_league_data;
+--DROP DATABASE IF EXISTS premier_league_data;
+--CREATE DATABASE premier_league_data;
+--USE premier_league_data;
 
 CREATE TABLE league_table (
     season TEXT NOT NULL,
@@ -17,7 +17,7 @@ CREATE TABLE league_table (
     xg FLOAT NOT NULL,
     xga FLOAT NOT NULL,
     xgd FLOAT NOT NULL,
-    xgd_per90 FLOAT NOT NULL,
+    xgd_per_90 FLOAT NOT NULL,
     last5 TEXT NOT NULL,
     attendance TEXT NOT NULL,
     top_team_scorer TEXT,
@@ -41,7 +41,7 @@ CREATE TABLE home_away_league_table (
     home_xg FLOAT NOT NULL,
     home_xga FLOAT NOT NULL,
     home_xgd FLOAT NOT NULL,
-    home_xgd_per90 FLOAT NOT NULL,
+    home_xgd_per_90 FLOAT NOT NULL,
     away_matches_played INTEGER NOT NULL,
     away_wins INTEGER NOT NULL,
     away_draws INTEGER NOT NULL,
@@ -53,9 +53,9 @@ CREATE TABLE home_away_league_table (
     away_xg FLOAT NOT NULL,
     away_xga FLOAT NOT NULL,
     away_xgd FLOAT NOT NULL,
-    away_xgd_per90 FLOAT NOT NULL,
+    away_xgd_per_90 FLOAT NOT NULL,
     PRIMARY KEY(season, squad)
-)
+);
 
 CREATE TABLE squad_standard_stats (
     season TEXT NOT NULL,
@@ -66,7 +66,7 @@ CREATE TABLE squad_standard_stats (
     playing_time_matches_played INTEGER NOT NULL,
     playing_time_starts INTEGER NOT NULL,
     playing_time_minutes TEXT NOT NULL,
-    playing_time_90s FLOAT NOT NULL,
+    playing_time_full_90s FLOAT NOT NULL,
     performance_goals INTEGER NOT NULL,
     performance_assists INTEGER NOT NULL,
     performance_non_penalty_goals INTEGER NOT NULL,
@@ -87,7 +87,7 @@ CREATE TABLE squad_standard_stats (
     per_90_minutes_xa FLOAT NOT NULL,
     per_90_minutes_xg_plus_xa FLOAT NOT NULL,
     per_90_minutes_npxg FLOAT NOT NULL,
-    per_90_minutes_npxg_plus_xa FLOAT NOT NULL
+    per_90_minutes_npxg_plus_xa FLOAT NOT NULL,
     PRIMARY KEY(season, squad)
 );
 
@@ -100,7 +100,7 @@ CREATE TABLE opponent_stats_teams_standard_stats (
     playing_time_matches_played INTEGER NOT NULL,
     playing_time_starts INTEGER NOT NULL,
     playing_time_minutes TEXT NOT NULL,
-    playing_time_90s FLOAT NOT NULL,
+    playing_time_full_90s FLOAT NOT NULL,
     performance_goals INTEGER NOT NULL,
     performance_assists INTEGER NOT NULL,
     performance_non_penalty_goals INTEGER NOT NULL,
@@ -121,7 +121,7 @@ CREATE TABLE opponent_stats_teams_standard_stats (
     per_90_minutes_xa FLOAT NOT NULL,
     per_90_minutes_xg_plus_xa FLOAT NOT NULL,
     per_90_minutes_npxg FLOAT NOT NULL,
-    per_90_minutes_npxg_plus_xa FLOAT NOT NULL
+    per_90_minutes_npxg_plus_xa FLOAT NOT NULL,
     PRIMARY KEY(season, squad)
 );
 
@@ -132,7 +132,7 @@ CREATE TABLE squad_goalkeeping (
     playing_time_matches_played INTEGER NOT NULL,
     playing_time_starts INTEGER NOT NULL,
     playing_time_minutes TEXT NOT NULL,
-    playing_time_90s FLOAT NOT NULL,
+    playing_time_full_90s FLOAT NOT NULL,
     performance_ga INTEGER NOT NULL,
     performance_ga_per_90 FLOAT NOT NULL,
     performance_shots_on_target_against INTEGER NOT NULL,
@@ -158,7 +158,7 @@ CREATE TABLE opponent_squad_goalkeeping (
     playing_time_matches_played INTEGER NOT NULL,
     playing_time_starts INTEGER NOT NULL,
     playing_time_minutes TEXT NOT NULL,
-    playing_time_90s FLOAT NOT NULL,
+    playing_time_full_90s FLOAT NOT NULL,
     performance_ga INTEGER NOT NULL,
     performance_ga_per_90 FLOAT NOT NULL,
     performance_shots_on_target_against INTEGER NOT NULL,
@@ -179,40 +179,9 @@ CREATE TABLE opponent_squad_goalkeeping (
 
 CREATE TABLE squad_advanced_goalkeeping (
     season TEXT NOT NULL,
+	squad TEXT NOT NULL,
     num_players_used INTEGER NOT NULL,
-    90s INTEGER NOT NULL,
-    goals_against INTEGER NOT NULL,
-    goals_penalty_kicks_allowed INTEGER NOT NULL,
-    goals_free_kicks_against INTEGER NOT NULL,
-    goals_corner_kick_goals_against INTEGER NOT NULL,
-    goal_own_goals_against INTEGER NOT NULL,
-    expected_post_shot_expected_goals FLOAT NOT NULL,
-    expexted_post_shot_expected_goals_per_shot_on_target FLOAT NOT NULL,
-    expexted_post_shot_expected_goals_minus_goals_allowed FLOAT NOT NULL,
-    expexted_post_shot_expected_goals_minus_goals_allowed_per_90 FLOAT NOT NULL,
-    launched_cmp INTEGER NOT NULL,
-    launched_att INTEGER NOT NULL,
-    launched_cmp% FLOAT NOT NULL,
-    passes_att INTEGER NOT NULL,
-    passes_thr INTEGER NOT NULL,
-    passes_launch_pct FLOAT NOT NULL,
-    passes_avglen FLOAT NOT NULL,
-    goal_kicks_att INTEGER NOT NULL,
-    goal_kicks_launch_pct FLOAT NOT NULL,
-    goal_kicks_avglen FLOAT NOT NULL,
-    crosses_opp INTEGER NOT NULL,
-    crosses_stp INTEGER NOT NULL,
-    crosses_stp_pct FLOAT NOT NULL,
-    sweeper_num_opa INTEGER NOT NULL,
-    sweeper_num_opa_per_90 FLOAT NOT NULL,
-    sweeper_avgdist FLOAT NOT NULL
-    PRIMARY KEY(season, squad)
-);
-
-CREATE TABLE opponent_stats_squad_advanced_goalkeeping (
-    season TEXT NOT NULL,
-    num_players_used INTEGER NOT NULL,
-    90s INTEGER NOT NULL,
+    full_90s INTEGER NOT NULL,
     goals_against INTEGER NOT NULL,
     goals_penalty_kicks_allowed INTEGER NOT NULL,
     goals_free_kicks_against INTEGER NOT NULL,
@@ -230,14 +199,47 @@ CREATE TABLE opponent_stats_squad_advanced_goalkeeping (
     passes_launch_pct FLOAT NOT NULL,
     passes_avglen FLOAT NOT NULL,
     goal_kicks_att INTEGER NOT NULL,
-    goal_kicks_launch% FLOAT NOT NULL,
+    goal_kicks_launch_pct FLOAT NOT NULL,
     goal_kicks_avglen FLOAT NOT NULL,
     crosses_opp INTEGER NOT NULL,
     crosses_stp INTEGER NOT NULL,
-    crosses_stp% FLOAT NOT NULL,
-    sweeper_#opa INTEGER NOT NULL,
-    sweeper_#opa_per_90 FLOAT NOT NULL,
-    sweeper_avgdist FLOAT NOT NULL
+    crosses_stp_pct FLOAT NOT NULL,
+    sweeper_num_opa INTEGER NOT NULL,
+    sweeper_num_opa_per_90 FLOAT NOT NULL,
+    sweeper_avgdist FLOAT NOT NULL,
+    PRIMARY KEY(season, squad)
+);
+
+CREATE TABLE opponent_stats_squad_advanced_goalkeeping (
+    season TEXT NOT NULL,
+	squad TEXT NOT NULL,
+    num_players_used INTEGER NOT NULL,
+    full_90s INTEGER NOT NULL,
+    goals_against INTEGER NOT NULL,
+    goals_penalty_kicks_allowed INTEGER NOT NULL,
+    goals_free_kicks_against INTEGER NOT NULL,
+    goals_corner_kick_goals_against INTEGER NOT NULL,
+    goal_own_goals_against INTEGER NOT NULL,
+    expected_post_shot_expected_goals FLOAT NOT NULL,
+    expexted_post_shot_expected_goals_per_shot_on_target FLOAT NOT NULL,
+    expexted_post_shot_expected_goals_minus_goals_allowed FLOAT NOT NULL,
+    expexted_post_shot_expected_goals_minus_goals_allowed_per_90 FLOAT NOT NULL,
+    launched_cmp INTEGER NOT NULL,
+    launched_att INTEGER NOT NULL,
+    launched_cmp_pct FLOAT NOT NULL,
+    passes_att INTEGER NOT NULL,
+    passes_thr INTEGER NOT NULL,
+    passes_launch_pct FLOAT NOT NULL,
+    passes_avglen FLOAT NOT NULL,
+    goal_kicks_att INTEGER NOT NULL,
+    goal_kicks_launch_pct FLOAT NOT NULL,
+    goal_kicks_avglen FLOAT NOT NULL,
+    crosses_opp INTEGER NOT NULL,
+    crosses_stp INTEGER NOT NULL,
+    crosses_stp_pct FLOAT NOT NULL,
+    sweeper_num_opa INTEGER NOT NULL,
+    sweeper_num_opa_per_90 FLOAT NOT NULL,
+    sweeper_avgdist FLOAT NOT NULL,
     PRIMARY KEY(season, squad)
 );
 
@@ -245,7 +247,7 @@ CREATE TABLE squad_shooting (
     season TEXT NOT NULL,
     squad TEXT NOT NULL,
     num_players_used INTEGER NOT NULL,
-    90s FLOAT NOT NULL,
+    full_90s FLOAT NOT NULL,
     standard_goals INTEGER NOT NULL,
     standard_sh INTEGER NOT NULL, --shots
     standard_sot INTEGER NOT NULL,
@@ -270,11 +272,11 @@ CREATE TABLE opponent_stats_squad_shooting (
     season TEXT NOT NULL,
     squad TEXT NOT NULL,
     num_players_used INTEGER NOT NULL,
-    90s FLOAT NOT NULL,
+    full_90s FLOAT NOT NULL,
     standard_goals INTEGER NOT NULL,
     standard_sh INTEGER NOT NULL, --shots
     standard_sot INTEGER NOT NULL,
-    standard_sot% FLOAT NOT NULL,
+    standard_sot_pct FLOAT NOT NULL,
     standard_shots_per_90 FLOAT NOT NULL,
     standard_shots_on_target_per_90 FLOAT NOT NULL,
     standard_goals_per_shot FLOAT NOT NULL,
@@ -295,7 +297,7 @@ CREATE TABLE squad_passing (
     season TEXT NOT NULL,
     squad TEXT NOT NULL,
     num_players_used INTEGER NOT NULL,
-    90s FLOAT NOT NULL,
+    full_90s FLOAT NOT NULL,
     total_cmp INTEGER NOT NULL,
     total_att INTEGER NOT NULL,
     total_cmp_pct FLOAT NOT NULL,
@@ -325,7 +327,7 @@ CREATE TABLE opponent_stats_squad_passing (
     season TEXT NOT NULL,
     squad TEXT NOT NULL,
     num_players_used INTEGER NOT NULL,
-    90s FLOAT NOT NULL,
+    full_90s FLOAT NOT NULL,
     total_cmp INTEGER NOT NULL,
     total_att INTEGER NOT NULL,
     total_cmp_pct FLOAT NOT NULL,
@@ -355,7 +357,7 @@ CREATE TABLE squad_pass_types (
     season TEXT NOT NULL,
     squad TEXT NOT NULL,
     num_players_used INTEGER NOT NULL,
-    90s FLOAT NOT NULL,
+    full_90s FLOAT NOT NULL,
     att INTEGER NOT NULL,
     pass_types_live INTEGER NOT NULL,
     pass_types_dead INTEGER NOT NULL,
@@ -388,7 +390,7 @@ CREATE TABLE opponent_stats_squad_pass_types (
     season TEXT NOT NULL,
     squad TEXT NOT NULL,
     num_players_used INTEGER NOT NULL,
-    90s FLOAT NOT NULL,
+    full_90s FLOAT NOT NULL,
     att INTEGER NOT NULL,
     pass_types_live INTEGER NOT NULL,
     pass_types_dead INTEGER NOT NULL,
@@ -421,7 +423,7 @@ CREATE TABLE squad_goal_and_shot_creation (
     season TEXT NOT NULL,
     squad TEXT NOT NULL,
     num_players_used INTEGER NOT NULL,
-    90s FLOAT NOT NULL,
+    full_90s FLOAT NOT NULL,
     sca_sca INTEGER NOT NULL, -- shot creating actions
     sca_sca90 FLOAT NOT NULL,
     sca_types_passlive INTEGER NOT NULL,
@@ -445,7 +447,7 @@ CREATE TABLE opponent_stats_squad_goal_and_shot_creation (
     season TEXT NOT NULL,
     squad TEXT NOT NULL,
     num_players_used INTEGER NOT NULL,
-    90s FLOAT NOT NULL,
+    full_90s FLOAT NOT NULL,
     sca_sca INTEGER NOT NULL, -- shot creating actions
     sca_sca90 FLOAT NOT NULL,
     sca_types_passlive INTEGER NOT NULL,
@@ -469,7 +471,7 @@ CREATE TABLE squad_defensive_actions (
     season TEXT NOT NULL,
     squad TEXT NOT NULL,
     num_players_used INTEGER NOT NULL,
-    90s FLOAT NOT NULL,
+    full_90s FLOAT NOT NULL,
     tackles_tkl INTEGER NOT NULL,
     tackles_tklw INTEGER NOT NULL,
     tackles_def_3rd INTEGER NOT NULL,
@@ -500,7 +502,7 @@ CREATE TABLE opponent_stats_squad_defensive_actions (
     season TEXT NOT NULL,
     squad TEXT NOT NULL,
     num_players_used INTEGER NOT NULL,
-    90s FLOAT NOT NULL,
+    full_90s FLOAT NOT NULL,
     tackles_tkl INTEGER NOT NULL,
     tackles_tklw INTEGER NOT NULL,
     tackles_def_3rd INTEGER NOT NULL,
@@ -531,7 +533,7 @@ CREATE TABLE squad_possesion (
     season TEXT NOT NULL,
     squad TEXT NOT NULL,
     num_players_used INTEGER NOT NULL,
-    90s FLOAT NOT NULL,
+    full_90s FLOAT NOT NULL,
     touches_touches INTEGER NOT NULL,
     touches_def_pen INTEGER NOT NULL, -- defensive touches in the defensive penalty area
     touches_def_3rd INTEGER NOT NULL,
@@ -562,7 +564,7 @@ CREATE TABLE opponent_stats_squad_possesion (
     season TEXT NOT NULL,
     squad TEXT NOT NULL,
     num_players_used INTEGER NOT NULL,
-    90s FLOAT NOT NULL,
+    full_90s FLOAT NOT NULL,
     touches_touches INTEGER NOT NULL,
     touches_def_pen INTEGER NOT NULL, -- defensive touches in the defensive penalty area
     touches_def_3rd INTEGER NOT NULL,
@@ -598,7 +600,7 @@ CREATE TABLE squad_playing_time (
     playing_time_min TEXT NOT NULL,
     playing_time_mn_per_mp INTEGER NOT NULL, -- minutes played per match played. always 90 not sure why this is a thing
     playing_time_min_pct FLOAT NOT NULL,
-    playing_time_90s INTEGER NOT NULL,
+    playing_time_full_90s INTEGER NOT NULL,
     starts_starts INTEGER NOT NULL,
     starts_mn_per_start INTEGER NOT NULL,
     starts_compl INTEGER NOT NULL,
@@ -613,7 +615,7 @@ CREATE TABLE squad_playing_time (
     team_success_xg_onxg FLOAT NOT NULL,
     team_success_xg_onxga FLOAT NOT NULL,
     team_success_xg_plus_minus FLOAT NOT NULL,
-    team_success_xg_plus_minus FLOAT NOT NULL,
+    team_success_xg_plus_minus_per_90 FLOAT NOT NULL,
     PRIMARY KEY(season, squad)
 );
 
@@ -626,7 +628,7 @@ CREATE TABLE opponent_stats_squad_playing_time (
     playing_time_min TEXT NOT NULL,
     playing_time_mn_per_mp INTEGER NOT NULL, -- minutes played per match played. always 90 not sure why this is a thing
     playing_time_min_pct FLOAT NOT NULL,
-    playing_time_90s INTEGER NOT NULL,
+    playing_time_full_90s INTEGER NOT NULL,
     starts_starts INTEGER NOT NULL,
     starts_mn_per_start INTEGER NOT NULL,
     starts_compl INTEGER NOT NULL,
@@ -641,7 +643,7 @@ CREATE TABLE opponent_stats_squad_playing_time (
     team_success_xg_onxg FLOAT NOT NULL,
     team_success_xg_onxga FLOAT NOT NULL,
     team_success_xg_plus_minus FLOAT NOT NULL,
-    team_success_xg_plus_minus FLOAT NOT NULL,
+    team_success_xg_plus_minus_per_90 FLOAT NOT NULL,
     PRIMARY KEY(season, squad)
 );
 
@@ -649,7 +651,7 @@ CREATE TABLE squad_miscellaneous_stats (
     season TEXT NOT NULL,
     squad TEXT NOT NULL,
     num_players_used INTEGER NOT NULL,
-    90s FLOAT NOT NULL,
+    full_90s FLOAT NOT NULL,
     performance_crdy INTEGER NOT NULL,
     performance_crdr INTEGER NOT NULL,
     performance_2crdy INTEGER NOT NULL,
@@ -673,7 +675,7 @@ CREATE TABLE opponent_stats_squad_miscellaneous_stats (
     season TEXT NOT NULL,
     squad TEXT NOT NULL,
     num_players_used INTEGER NOT NULL,
-    90s FLOAT NOT NULL,
+    full_90s FLOAT NOT NULL,
     performance_crdy INTEGER NOT NULL,
     performance_crdr INTEGER NOT NULL,
     performance_2crdy INTEGER NOT NULL,
@@ -695,6 +697,7 @@ CREATE TABLE opponent_stats_squad_miscellaneous_stats (
 
 CREATE TABLE player_standard_stats (
     season TEXT NOT NULL,
+	team TEXT NOT NULL,
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
     pos TEXT NOT NULL,
@@ -703,7 +706,7 @@ CREATE TABLE player_standard_stats (
     playing_time_matches_played INTEGER NOT NULL,
     playing_time_starts INTEGER NOT NULL,
     playing_time_minutes TEXT NOT NULL,
-    playing_time_90s FLOAT NOT NULL,
+    playing_time_full_90s FLOAT NOT NULL,
     performance_goals INTEGER NOT NULL,
     performance_assists INTEGER NOT NULL,
     performance_non_penalty_goals INTEGER NOT NULL,
@@ -724,20 +727,20 @@ CREATE TABLE player_standard_stats (
     per_90_minutes_xa FLOAT NOT NULL,
     per_90_minutes_xg_plus_xa FLOAT NOT NULL,
     per_90_minutes_npxg FLOAT NOT NULL,
-    per_90_minutes_npxg_plus_xa FLOAT NOT NULL
-    PRIMARY KEY(season, player)
+    per_90_minutes_npxg_plus_xa FLOAT NOT NULL,
+    PRIMARY KEY(season, team, first_name, last_name)
 );
 
 CREATE TABLE scores_and_fixtures (
     season TEXT NOT NULL,
     team TEXT NOT NULL,
-    date DATETIME NOT NULL,
-    time TIMESTAMP NOT NULL,
+    "date" DATE NOT NULL,
+    "time" TIMESTAMP NOT NULL,
     comp TEXT NOT NULL,
-    comp_round TEXT NOT NULL
-    day_of_week VARCHAR(3) NOT NULL
-    venue VARCHAR(4) NOT NULL,
-    result VARCHAR(1) NOT NULL,
+    comp_round TEXT NOT NULL,
+    day_of_week TEXT NOT NULL,
+    venue TEXT NOT NULL,
+    "result" TEXT NOT NULL,
     gf INTEGER NOT NULL,
     ga INTEGER NOT NULL,
     opponent TEXT NOT NULL,
@@ -748,7 +751,7 @@ CREATE TABLE scores_and_fixtures (
     formation TEXT NOT NULL,
     referee TEXT NOT NULL,
     notes TEXT NOT NULL,
-    PRIMARY KEY(season, team, date)
+    PRIMARY KEY(season, team, "date")
 );
 
 CREATE TABLE player_goalkeeping (
@@ -762,7 +765,7 @@ CREATE TABLE player_goalkeeping (
     playing_time_mp INT NOT NULL,
     playing_time_starts INT NOT NULL,
     playing_time_min INT NOT NULL,
-    playing_time_90s FLOAT NOT NULL,
+    playing_time_full_90s FLOAT NOT NULL,
     performance_ga INT NOT NULL,
     performance_ga90 FLOAT NOT NULL,
     performance_sota INT NOT NULL,
@@ -789,7 +792,7 @@ CREATE TABLE player_advanced_goalkeeping (
     nation TEXT NOT NULL,
     pos TEXT NOT NULL,
     age TEXT NOT NULL,
-    90s FLOAT NOT NULL,
+    full_90s FLOAT NOT NULL,
     goals_ga INT NOT NULL,
     goals_pka INT NOT NULL,
     goals_fk INT NOT NULL,
@@ -826,7 +829,7 @@ CREATE TABLE player_shooting (
     nation VARCHAR(3) NOT NULL,
     pos TEXT NOT NULL,
     age TEXT NOT NULL,
-    90s FLOAT NOT NULL,
+    full_90s FLOAT NOT NULL,
     standard_goals INTEGER NOT NULL,
     standard_sh INTEGER NOT NULL, --shots
     standard_sot INTEGER NOT NULL,
@@ -855,7 +858,7 @@ CREATE TABLE player_passing (
     nation TEXT NOT NULL,
     pos TEXT NOT NULL,
     age TEXT NOT NULL,
-    90s FLOAT NOT NULL,
+    full_90s FLOAT NOT NULL,
     total_cmp INTEGER NOT NULL,
     total_att INTEGER NOT NULL,
     total_cmp_pct FLOAT NOT NULL,
@@ -888,7 +891,7 @@ CREATE TABLE player_pass_types (
     last_name TEXT NOT NULL,
     nation TEXT NOT NULL,
     age TEXT NOT NULL,
-    90s FLOAT NOT NULL,
+    full_90s FLOAT NOT NULL,
     att INTEGER NOT NULL,
     pass_types_live INTEGER NOT NULL,
     pass_types_dead INTEGER NOT NULL,
@@ -925,7 +928,7 @@ CREATE TABLE player_goal_and_shot_creation (
     nation TEXT NOT NULL,
     pos TEXT NOT NULL,
     age TEXT NOT NULL,
-    90s FLOAT NOT NULL,
+    full_90s FLOAT NOT NULL,
     sca_sca INTEGER NOT NULL, -- shot creating actions
     sca_sca90 FLOAT NOT NULL,
     sca_types_passlive INTEGER NOT NULL,
@@ -954,7 +957,7 @@ CREATE TABLE player_defensive_actions (
     pos TEXT NOT NULL,
     age TEXT NOT NULL,
     num_players_used INTEGER NOT NULL,
-    90s FLOAT NOT NULL,
+    full_90s FLOAT NOT NULL,
     tackles_tkl INTEGER NOT NULL,
     tackles_tklw INTEGER NOT NULL,
     tackles_def_3rd INTEGER NOT NULL,
@@ -989,7 +992,7 @@ CREATE TABLE player_possesion (
     nation TEXT NOT NULL,
     pos TEXT NOT NULL,
     age TEXT NOT NULL,
-    90s FLOAT NOT NULL,
+    full_90s FLOAT NOT NULL,
     touches_touches INTEGER NOT NULL,
     touches_def_pen INTEGER NOT NULL, -- defensive touches in the defensive penalty area
     touches_def_3rd INTEGER NOT NULL,
@@ -1028,7 +1031,7 @@ CREATE TABLE player_playing_time (
     playing_time_min TEXT NOT NULL,
     playing_time_mn_per_mp INTEGER NOT NULL, -- minutes played per match played. always 90 not sure why this is a thing
     playing_time_min_pct FLOAT NOT NULL,
-    playing_time_90s INTEGER NOT NULL,
+    playing_time_full_90s INTEGER NOT NULL,
     starts_starts INTEGER NOT NULL,
     starts_mn_per_start INTEGER NOT NULL,
     starts_compl INTEGER NOT NULL,
@@ -1043,8 +1046,8 @@ CREATE TABLE player_playing_time (
     team_success_xg_onxg FLOAT NOT NULL,
     team_success_xg_onxga FLOAT NOT NULL,
     team_success_xg_plus_minus FLOAT NOT NULL,
-    team_success_xg_plus_minus FLOAT NOT NULL,
-    PRIMARY KEY(season, squad)
+    team_success_xg_plus_minus_per_90 FLOAT NOT NULL,
+    PRIMARY KEY(season, team, first_name, last_name)
 );
 
 CREATE TABLE player_miscellaneous_stats (
@@ -1055,7 +1058,7 @@ CREATE TABLE player_miscellaneous_stats (
     nation TEXT NOT NULL,
     pos TEXT NOT NULL,
     age TEXT NOT NULL,
-    90s FLOAT NOT NULL,
+    full_90s FLOAT NOT NULL,
     performance_crdy INTEGER NOT NULL,
     performance_crdr INTEGER NOT NULL,
     performance_2crdy INTEGER NOT NULL,

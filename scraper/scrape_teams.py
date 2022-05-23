@@ -17,6 +17,7 @@ class TeamScraper(Scraper):
             table_names.append(tup[0])
             table_names.append(tup[1])
         self.table_names = table_names
+        self.table_names = ['squad_' + x for x in self.table_names]
         
         self.table_names.insert(0, 'league_table')
         self.table_names.insert(1, 'home_away_league_table',)

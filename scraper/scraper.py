@@ -75,6 +75,27 @@ class Scraper:
 
         return soup
 
+    def _clean_header_(self, header: str) -> str:
+        """
+        remove problematic patterns from headers
+        """
+        result = header
+        result = result.replace('90s', 'full_90s')
+        result = result.replace('(', '')
+        result = result.replace(')', '')
+        result = result.replace('1/3', 'final_third')
+        result = result.replace(':', '')
+        result = result.replace('xg+/-', '_plus_minus')
+        result = result.replace('xg+/-90', '_plus_minus_per_90')
+        result = result.replace('+/-', '_plus_minus')
+        result = result.replace('+', '_plus_')
+        result = result.replace('-', '_minus_')
+        result - result.replace('/', '_per_')
+        result = result.replace('%', '_pct')
+        result = result.replace('#', 'num_')
+
+        return result
+
     def _get_all_headers_(self, soup):
         """
         a method to get all table headers from a league page
@@ -108,10 +129,10 @@ class Scraper:
                     text = lower_header[i].text.strip().encode().decode("utf-8").replace(' ', '_').lower()
                     if over_headers[i] != '':
                         text = over_headers[i] + '_' + text
-                    row.append(text)
+                    row.append(self._clean_header_(text))
                 all_headers.append(row)
             elif len(header_rows) == 1:
-                all_headers.append([x.text.strip().encode().decode("utf-8").replace(' ', '_').lower() for x in header_rows[0].find_all('th')])
+                all_headers.append([self._clean_header_(x.text.strip().encode().decode("utf-8").replace(' ', '_').lower()) for x in header_rows[0].find_all('th')])
             elif len(header_rows > 2):
                 print('more than 2 rows')
         

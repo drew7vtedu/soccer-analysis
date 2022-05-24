@@ -1,4 +1,5 @@
 from bdb import set_trace
+from cgitb import reset
 import pandas as pd
 from bs4 import BeautifulSoup
 import requests
@@ -8,6 +9,7 @@ import os
 import pdb
 from pathlib import Path
 import sys
+import yaml
 
 class Scraper:
 
@@ -27,6 +29,15 @@ class Scraper:
         'playing_time',
         'miscellaneous_stats'
         ]
+        self.config = self.load_config(self.args.config_path)
+        self.sql_conn_str = f"postgresql+psycopg2://{self.config['sql_user']}:{self.config['sql_password']}@localhost:{self.config['sql_port']}/premier_league_data"
+
+    def load_config(self, config_path) -> dict:
+        """
+        loads a file at the given path as a dictionary
+        """
+        with open(config_path, 'r') as file:
+            return yaml.safe_load(file)
 
     @staticmethod
     def init_command_line_args():
@@ -36,6 +47,7 @@ class Scraper:
         parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
         parser.add_argument('--fbref_url', type=str, required=False, default="https://fbref.com/en/comps/9/Premier-League-Stats", help='fbref url to request data from')
+        parser.add_argument('--config_path', type=str, required=False, default='_config_.yaml', help='Path to the config file to load.')
 
         return parser
 
@@ -90,7 +102,7 @@ class Scraper:
         result = result.replace('+/-', '_plus_minus')
         result = result.replace('+', '_plus_')
         result = result.replace('-', '_minus_')
-        result - result.replace('/', '_per_')
+        result = result.replace('/', '_per_')
         result = result.replace('%', '_pct')
         result = result.replace('#', 'num_')
 

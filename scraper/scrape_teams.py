@@ -4,6 +4,7 @@ import argparse
 import pdb
 import sys
 from pathlib import Path
+from sqlalchemy import create_engine
 
 from scraper import Scraper
 
@@ -21,7 +22,6 @@ class TeamScraper(Scraper):
         
         self.table_names.insert(0, 'league_table')
         self.table_names.insert(1, 'home_away_league_table',)
-        pdb.set_trace()
     
     def save_data(self, df, fname):
         """
@@ -36,9 +36,16 @@ class TeamScraper(Scraper):
         with open(myfile, mode) as outfile:
             df.to_csv(outfile, mode, index=False)
 
+    def push_to_sql(self, df: pd.DataFrame, table_name: str):
+        """
+        Push a dataframe to the given table name in PostGres
+        """
+        engine = create_engine(self.sql_conn_str)
+        with engine.connect() as conn:
+            df.to_sql(table_name, conn, index=False, if_exists='append')
+
     def main(self, url):
         soup = self._request_fbref_(url)
-        pdb.set_trace()
         
         tables = soup.find_all('tbody')
 
@@ -48,7 +55,9 @@ class TeamScraper(Scraper):
 
         for i in range(len(tables)):
             t = self._scrape_table_(tables[i], headers[i])
-            t.to_csv(f"{self.args.raw_data_path}/{self.table_names[i]}.csv", index=False)
+            pdb.set_trace()
+            self.push_to_sql(t, self.table_names[i])
+            # t.to_csv(f"{self.args.raw_data_path}/{self.table_names[i]}.csv", index=False)
         
 
 

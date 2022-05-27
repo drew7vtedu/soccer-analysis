@@ -1,3 +1,7 @@
 sql_username:
 sql_password:
 sql_port: 5433
+
+seasons:
+  21/22: "https://fbref.com/en/comps/9/Premier-League-Stats"
+  20/21: https://fbref.com/en/comps/9/10728/2020-2021-Premier-League-Stats

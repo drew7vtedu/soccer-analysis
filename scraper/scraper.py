@@ -31,6 +31,7 @@ class Scraper:
         ]
         self.config = self.load_config(self.args.config_path)
         self.sql_conn_str = f"postgresql+psycopg2://{self.config['sql_user']}:{self.config['sql_password']}@localhost:{self.config['sql_port']}/premier_league_data"
+        self.seasons = self.config['seasons']
 
     def load_config(self, config_path) -> dict:
         """
@@ -46,8 +47,8 @@ class Scraper:
         """
         parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-        parser.add_argument('--fbref_url', type=str, required=False, default="https://fbref.com/en/comps/9/Premier-League-Stats", help='fbref url to request data from')
         parser.add_argument('--config_path', type=str, required=False, default='_config_.yaml', help='Path to the config file to load.')
+        parser.add_argument('--update_db', action='store_true', required=False, default=False, help='Include this argument to push results to the database')
 
         return parser
 
@@ -105,6 +106,10 @@ class Scraper:
         result = result.replace('/', '_per_')
         result = result.replace('%', '_pct')
         result = result.replace('#', 'num_')
+        if result == 'int':
+            return 'interceptions'
+
+        result = result.replace('__', '_')
 
         return result
 
@@ -166,7 +171,10 @@ class Scraper:
         for row in rows:
             current_row = []
             for cell in row:
-                current_row.append(cell.text.strip().encode().decode("utf-8"))
+                cell_text = cell.text.strip().encode().decode("utf-8")
+                if cell_text == '':
+                    cell_text = None
+                current_row.append(cell_text)
             result.append(current_row)
         try:
             return pd.DataFrame(result, columns=headers)

@@ -12,6 +12,7 @@ class TeamScraper(Scraper):
 
     def __init__(self, args):
         super().__init__(args)
+        self.table_names.remove('scores_and_fixtures')
         opponent_table_names = ['opponent_stats_' + x for x in self.table_names]
         table_names = []
         for tup in zip(self.table_names, opponent_table_names):
@@ -44,24 +45,51 @@ class TeamScraper(Scraper):
         with engine.connect() as conn:
             df.to_sql(table_name, conn, index=False, if_exists='append')
 
-    def main(self, url):
+    def scrape_league(self, url: str, season: str, update_db: bool):
+        """
+        Scrape an entire league page worth of team data
+        Add the provided season string to all dataframes
+        """
         soup = self._request_fbref_(url)
         
         tables = soup.find_all('tbody')
 
         headers = self._get_all_headers_(soup)
-        # headers[1].insert(1, 'comp')
-        # headers[-1].insert(0, 'Rk')
 
-        for i in range(len(tables)):
+        for i in range(len(self.table_names)): # tables not accounted for which come after will be left out
             t = self._scrape_table_(tables[i], headers[i])
-            pdb.set_trace()
-            self.push_to_sql(t, self.table_names[i])
-            # t.to_csv(f"{self.args.raw_data_path}/{self.table_names[i]}.csv", index=False)
+            t['season'] = season
+            t = self.clean_table(t, self.table_names[i])
+            # t['league'] = 'Premier League'
+            if update_db:
+                # print(self.table_names[i])
+                # pdb.set_trace()
+                print(f"{season}, {self.table_names[i]}")
+                self.push_to_sql(t, self.table_names[i])
+            else:
+                # t.to_csv(f"{self.args.raw_data_path}/{self.table_names[i]}.csv", index=False)
+                pass
+
+    def clean_table(self, table: pd.DataFrame, table_name: str) -> pd.DataFrame:
+        """
+        Applies some cleaning to the given table using the given table name 
+        to identify which rules to apply
+        """
+        pass
+        # result = table.copy()
+
+        # return result
+
+    def main(self):
+        """
+        Scrape all league pages in the config and push them to sql
+        """
+        for season in self.seasons.keys():
+            self.scrape_league(self.seasons[season], season, self.args.update_db)
         
 
 
 if __name__ == '__main__':
     args = TeamScraper.init_command_line_args().parse_args()
     scraper = TeamScraper(args)
-    scraper.main(args.fbref_url)
+    scraper.main()

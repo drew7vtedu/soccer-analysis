@@ -4,9 +4,9 @@ import argparse
 import pdb
 import sys
 from pathlib import Path
-from sqlalchemy import create_engine
+import time
 
-from scraper import Scraper
+from scrapers.scraper import Scraper
 
 class TeamScraper(Scraper):
 
@@ -23,6 +23,8 @@ class TeamScraper(Scraper):
         
         self.table_names.insert(0, 'league_table')
         self.table_names.insert(1, 'home_away_league_table',)
+        self.raw_data_path = self.raw_data_path + 'teams/'
+        self.proc_data_path = self.proc_data_path + 'teams/'
     
     def save_data(self, df, fname):
         """
@@ -36,14 +38,6 @@ class TeamScraper(Scraper):
 
         with open(myfile, mode) as outfile:
             df.to_csv(outfile, mode, index=False)
-
-    def push_to_sql(self, df: pd.DataFrame, table_name: str):
-        """
-        Push a dataframe to the given table name in PostGres
-        """
-        engine = create_engine(self.sql_conn_str)
-        with engine.connect() as conn:
-            df.to_sql(table_name, conn, index=False, if_exists='append')
 
     def scrape_league(self, url: str, season: str, update_db: bool):
         """
@@ -60,32 +54,30 @@ class TeamScraper(Scraper):
             t = self._scrape_table_(tables[i], headers[i])
             t['season'] = season
             t = self.clean_table(t, self.table_names[i])
-            # t['league'] = 'Premier League'
+            Path(self.raw_data_path).mkdir(exist_ok=True, parents=True)
+            t.to_csv(self.raw_data_path+self.table_names[i]+'.csv', index=False)
             if update_db:
-                # print(self.table_names[i])
-                # pdb.set_trace()
                 print(f"{season}, {self.table_names[i]}")
                 self.push_to_sql(t, self.table_names[i])
-            else:
-                # t.to_csv(f"{self.args.raw_data_path}/{self.table_names[i]}.csv", index=False)
-                pass
 
     def clean_table(self, table: pd.DataFrame, table_name: str) -> pd.DataFrame:
         """
         Applies some cleaning to the given table using the given table name 
         to identify which rules to apply
         """
-        pass
-        # result = table.copy()
+        result = table.copy()
+        if 'attendance' in result.columns:
+            result['attendance'] = result['attendance'].apply(lambda x: self.string_num_to_int(x))
 
-        # return result
+        return result
 
     def main(self):
         """
         Scrape all league pages in the config and push them to sql
         """
-        for season in self.seasons.keys():
-            self.scrape_league(self.seasons[season], season, self.args.update_db)
+        for season in self.config['seasons'].keys():
+            self.scrape_league(self.config['seasons'][season], season, self.args.update_db)
+            time.sleep(60)
         
 
 

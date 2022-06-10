@@ -10,6 +10,7 @@ import pdb
 from pathlib import Path
 import sys
 import yaml
+from sqlalchemy import create_engine
 
 class Scraper:
 
@@ -31,7 +32,8 @@ class Scraper:
         ]
         self.config = self.load_config(self.args.config_path)
         self.sql_conn_str = f"postgresql+psycopg2://{self.config['sql_user']}:{self.config['sql_password']}@localhost:{self.config['sql_port']}/premier_league_data"
-        self.seasons = self.config['seasons']
+        self.raw_data_path = 'data/raw/'
+        self.proc_data_path = 'data/processed/'
 
     def load_config(self, config_path) -> dict:
         """
@@ -48,9 +50,19 @@ class Scraper:
         parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
         parser.add_argument('--config_path', type=str, required=False, default='_config_.yaml', help='Path to the config file to load.')
-        parser.add_argument('--update_db', action='store_true', required=False, default=False, help='Include this argument to push results to the database')
+        parser.add_argument('--update_db', action='store_true', required=False, default=False, help='Include this argument to push results to the database.')
+        parser.add_argument('--use_cached_data', action='store_true', required=False, default=False, help='Include this argument to push cached data rather than scrape new data.')
+        parser.add_argument('--filter_teams', action='store_true', required=False, default=False, help='Include this argument to limit the teams scraped to the list in config["teams"].')
 
         return parser
+
+    def push_to_sql(self, df: pd.DataFrame, table_name: str):
+        """
+        Push a dataframe to the given table name in PostGres
+        """
+        engine = create_engine(self.sql_conn_str)
+        with engine.connect() as conn:
+            df.to_sql(table_name, conn, index=False, if_exists='append')
 
     def scrape_teams_and_urls(self, soup):
         """
@@ -69,7 +81,7 @@ class Scraper:
 
         result = dict()
         for row in rows:
-            name = row.find('td',{"data-stat":"squad"}).text.strip().encode().decode("utf-8")
+            name = row.find('td',{"data-stat":"squad"}).text.strip().encode().decode("utf-8").replace("\'", '') # Fixes issue with teams like Nott'ham Forest
             url = row.find('td',{"data-stat":"squad"}).find('a')['href']
             result[name] = url
         return result 
@@ -87,6 +99,19 @@ class Scraper:
         soup = BeautifulSoup(comm.sub("",r.text),'lxml')
 
         return soup
+
+    def load_cached_data(self, push_to_db):
+        """
+        Load data which has been saved in csvs.
+        """
+        dir = os.listdir(self.args.raw_data_path)
+        for team in dir:
+            teams = os.listdir(self.args.raw_data_path + team)
+            csvs = [x for x in teams if '.csv' in x]
+            for file in csvs:
+                df = pd.read_csv(self.raw_data_path+team+file)
+                if push_to_db:
+                    self.push_to_sql(df, file[:-4])
 
     def _clean_header_(self, header: str) -> str:
         """
@@ -184,7 +209,13 @@ class Scraper:
                 headers = headers[1:]           
             return pd.DataFrame(result, columns=headers)
 
-
+    def string_num_to_int(self, val: str) -> int:
+        """
+        Convert string numbers in the form '30,100' to ints i.e. 30100
+        """
+        if val is None:
+            return val
+        return int(val.replace(',', ''))
         
     def _clean_soup_(self, content):
         """

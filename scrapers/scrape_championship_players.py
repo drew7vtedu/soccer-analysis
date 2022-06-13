@@ -35,15 +35,7 @@ class ChampionshipPlayerScraper(PlayerScraper):
             tables = team_soup.find_all('tbody')
             headers = self._get_all_headers_(team_soup)
             for i in range(len(self.table_names)):
-                print(f"{season}, {team}, {self.table_names[i]}")
-                table = self._scrape_table_(tables[i], headers[i])
-                table['season'] = season
-                table['team'] = team
-                table = self.clean_table(table, self.table_names[i])
-                Path(self.raw_data_path+team.replace(' ', '')+'/').mkdir(exist_ok=True, parents=True)
-                table.to_csv(self.raw_data_path+team.replace(' ', '')+'/'+self.table_names[i]+'.csv', index=False)
-                if update_db:
-                    self.push_to_sql(table, self.table_names[i])
+                self.scrape_teams_helper(season, team, tables[i], headers[i], self.table_names[i], update_db)
             time.sleep(60)
 
     def main(self):

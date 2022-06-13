@@ -408,6 +408,20 @@ class PlayerScraper(Scraper):
 
         return result
 
+    def scrape_teams_helper(self, season: str, team: str, table, headers: str, table_name: str, update_db):
+        """
+        Parse the given table html and headers and push the resulting table to the database if argument provided
+        """
+        print(f"{season}, {team}, {table_name}")
+        table = self._scrape_table_(table, headers)
+        table['season'] = season
+        table['team'] = team
+        table = self.clean_table(table, table_name)
+        Path(self.raw_data_path+team.replace(' ', '')+'/').mkdir(exist_ok=True, parents=True)
+        table.to_csv(self.raw_data_path+team.replace(' ', '')+'/'+table_name+'.csv', index=False)
+        if update_db:
+            self.push_to_sql(table, table_name)
+
     def scrape_teams(self, url: str, season: str, update_db: bool):
         soup = self._request_fbref_(url)
         team_urls = self.scrape_teams_and_urls(soup)
@@ -416,15 +430,7 @@ class PlayerScraper(Scraper):
             tables = team_soup.find_all('tbody')
             headers = self._get_all_headers_(team_soup)
             for i in range(len(self.table_names)):
-                print(f"{season}, {team}, {self.table_names[i]}")
-                table = self._scrape_table_(tables[i], headers[i])
-                table['season'] = season
-                table['team'] = team
-                table = self.clean_table(table, self.table_names[i])
-                Path(self.raw_data_path+team.replace(' ', '')+'/').mkdir(exist_ok=True, parents=True)
-                table.to_csv(self.raw_data_path+team.replace(' ', '')+'/'+self.table_names[i]+'.csv', index=False)
-                if update_db:
-                    self.push_to_sql(table, self.table_names[i])
+                self.scrape_teams_helper(season, team, tables[i], headers[i], self.table_names[i], update_db)
             time.sleep(60)
 
     def main(self):

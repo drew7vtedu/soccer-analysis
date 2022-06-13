@@ -6,6 +6,8 @@ import sys
 from pathlib import Path
 import time
 
+sys.path.append('.')
+
 from scrapers.scraper import Scraper
 
 class TeamScraper(Scraper):
@@ -39,6 +41,19 @@ class TeamScraper(Scraper):
         with open(myfile, mode) as outfile:
             df.to_csv(outfile, mode, index=False)
 
+    def scrape_league_helper(self, season: str, table, headers, table_name: str, update_db: bool):
+        """
+        Parse the given table html and headers and push the resulting table to the database if argument provided
+        """
+        table = self._scrape_table_(table, headers)
+        table['season'] = season
+        table = self.clean_table(table, table_name)
+        Path(self.raw_data_path).mkdir(exist_ok=True, parents=True)
+        table.to_csv(self.raw_data_path+table_name+'.csv', index=False)
+        print(f"{season}, {table_name}")
+        if update_db:
+            self.push_to_sql(table, table_name)
+
     def scrape_league(self, url: str, season: str, update_db: bool):
         """
         Scrape an entire league page worth of team data
@@ -51,14 +66,7 @@ class TeamScraper(Scraper):
         headers = self._get_all_headers_(soup)
 
         for i in range(len(self.table_names)): # tables not accounted for which come after will be left out
-            t = self._scrape_table_(tables[i], headers[i])
-            t['season'] = season
-            t = self.clean_table(t, self.table_names[i])
-            Path(self.raw_data_path).mkdir(exist_ok=True, parents=True)
-            t.to_csv(self.raw_data_path+self.table_names[i]+'.csv', index=False)
-            if update_db:
-                print(f"{season}, {self.table_names[i]}")
-                self.push_to_sql(t, self.table_names[i])
+            self.scrape_league_helper(season, tables[i], headers[i], self.table_names[i], update_db)
 
     def clean_table(self, table: pd.DataFrame, table_name: str) -> pd.DataFrame:
         """

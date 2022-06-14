@@ -9,8 +9,10 @@ import os
 import pdb
 from pathlib import Path
 import sys
-import yaml
 from sqlalchemy import create_engine
+
+sys.path.append('.')
+import util_funcs as util
 
 class Scraper:
 
@@ -30,17 +32,10 @@ class Scraper:
         'playing_time',
         'miscellaneous_stats'
         ]
-        self.config = self.load_config(self.args.config_path)
+        self.config = util.load_config(self.args.config_path)
         self.sql_conn_str = f"postgresql+psycopg2://{self.config['sql_user']}:{self.config['sql_password']}@localhost:{self.config['sql_port']}/premier_league_data"
         self.raw_data_path = 'data/raw/'
         self.proc_data_path = 'data/processed/'
-
-    def load_config(self, config_path) -> dict:
-        """
-        loads a file at the given path as a dictionary
-        """
-        with open(config_path, 'r') as file:
-            return yaml.safe_load(file)
 
     @staticmethod
     def init_command_line_args():

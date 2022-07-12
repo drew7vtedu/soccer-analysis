@@ -1132,11 +1132,11 @@ CREATE TABLE championship_league_table (
     PRIMARY KEY(season, squad)
 );
 
-CREATE TABLE player_mapping (
+CREATE TABLE fpl_fbref_mapping (
     fbref_first_name TEXT,
     fbref_last_name TEXT,
     fpl_first_name TEXT,
-    fpl_last_name TEXT,
-    fpl_id INT,
-    PRIMARY KEY()
+    fpl_second_name TEXT,
+    season TEXT,
+    PRIMARY KEY(fbref_first_name, fbref_last_name, fpl_first_name, fpl_second_name, season)
 );

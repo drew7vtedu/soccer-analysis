@@ -1,0 +1,65 @@
+championship_player_xg_query: >
+  SELECT prem.first_name, prem.last_name, 
+  prem.season AS following_prem_season,
+  prem.expected_xg, prem.expected_xa, 
+  championship.season AS preceding_championship_season,
+  championship.performance_gls, championship.performance_ast
+  FROM 
+  (SELECT first_name, last_name, expected_xg, expected_xa, season, rank
+  FROM player_standard_stats JOIN season_rank USING(season)) prem
+  JOIN (championship_player_standard_stats 
+    JOIN season_rank USING(season)) championship 
+    ON prem.first_name = championship.first_name
+      AND prem.last_name = championship.last_name
+      AND prem.rank = championship.rank + 1
+
+championship_team_xg_query: >
+  SELECT prem.team, 
+  prem.season AS following_prem_season,
+  prem.clean_sheets,
+  championship.season AS preceding_championship_season,
+  championship.ga
+  FROM 
+  ((SELECT team, season, COUNT(team) AS clean_sheets
+  FROM player_scores_and_fixtures
+  WHERE ga = '0'
+    AND comp = 'Premier League'
+  GROUP BY team, season) prem_table JOIN season_rank USING(season)) prem
+  JOIN (championship_league_table 
+    JOIN season_rank USING(season)) championship 
+      ON prem.team = championship.squad
+        AND prem.rank = championship.rank + 1
+
+get_xpoints_data: >
+  SELECT first_name, last_name, standard.season, standard.pos,
+  expected_xg AS xg, expected_xa as xa,
+  standard.performance_crdy AS crdy, standard.performance_crdr AS crdr,
+  playing_time_min_pct AS min_pct,
+  performance_og AS og,
+  clean_sheets,
+  fpl_first_name, fpl_second_name
+  FROM player_standard_stats standard
+    JOIN player_playing_time USING(first_name, last_name, season)
+    JOIN player_miscellaneous_stats USING(first_name, last_name, season)
+    LEFT JOIN 
+      (SELECT season, team, COUNT(team) as clean_sheets
+      FROM player_scores_and_fixtures
+      WHERE ga = '0'
+        AND comp = 'Premier League'
+      GROUP BY season, team) AS clean_sheets 
+        ON standard.season = clean_sheets.season 
+          AND standard.team = clean_sheets.team
+    JOIN fpl_fbref_mapping fpl
+      ON standard.first_name = fpl.fbref_first_name
+        AND standard.last_name = fpl.fbref_last_name
+        AND standard.season = fpl.season
+
+get_clean_sheets: >
+  SELECT season, team, COUNT(team) as clean_sheets
+  FROM scores_and_fixtures
+  WHERE ga = '0'
+    AND comp = 'Premier League'
+  GROUP BY season, team
+
+get_points: >
+  

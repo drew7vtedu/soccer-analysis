@@ -24,7 +24,7 @@ class ChampionshipTeamScraper(TeamScraper):
         """
         for season in self.config['championship_seasons'].keys():
             self.scrape_league(self.config['championship_seasons'][season], season, self.args.update_db)
-            time.sleep(60)
+            time.sleep(30)
         
 
 

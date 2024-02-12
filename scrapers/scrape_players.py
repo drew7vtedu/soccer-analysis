@@ -15,10 +15,9 @@ class PlayerScraper(Scraper):
 
     def __init__(self, args) -> None:
         super().__init__(args)
+        self.raw_data_path += 'players/'
         self.fbref_base_string = 'https://fbref.com/'
-        self.table_names = ['player_' + x for x in self.table_names]
-        self.raw_data_path = self.raw_data_path + 'championship/'
-        self.proc_data_path = self.proc_data_path + 'championship/'
+        self.table_names = ['player_' + x if x != 'scores_and_fixtures' else x for x in self.table_names]
 
     def get_shootout_goals(self, val: str) -> int:
         """
@@ -56,8 +55,10 @@ class PlayerScraper(Scraper):
 
         if 'playing_time_min' in result.columns:
             result['playing_time_min'] = result['playing_time_min'].apply(lambda x: self.string_num_to_int(x))
-            result['playing_time_min'].fillna(value=0, inplace=True)
+            # result['playing_time_min'].fillna(value=0, inplace=True)
+            result.dropna(subset=['playing_time_min'], inplace=True)
 
+        # why the fuck did I do this
         if 'playing_time_full_90s' in result.columns:
             result['playing_time_full_90s'].fillna(value=0.0, inplace=True)
 
@@ -397,7 +398,12 @@ class PlayerScraper(Scraper):
         if 'expected_npxg_plus_xa' in result.columns:
             result['expected_npxg_plus_xa'].fillna(value=0.0, inplace=True)
 
-        if table_name == 'scores_and_fixtures':
+        if 'mp' in result.columns:
+            result.rename(mapper={'mp': 'playing_time_mp'}, axis=1, inplace=True)
+
+        if 'scores_and_fixtures' in table_name:
+            # remove games not played yet
+            result = result.dropna(subset=['result', 'gf', 'ga', 'poss', 'formation'], how='all')
             result.drop(columns='match_report', inplace=True)
             result['time'] = pd.to_datetime(result['time'])
             result['attendance'] = result['attendance'].apply(lambda x: self.string_num_to_int(x))
@@ -431,7 +437,7 @@ class PlayerScraper(Scraper):
             headers = self._get_all_headers_(team_soup)
             for i in range(len(self.table_names)):
                 self.scrape_teams_helper(season, team, tables[i], headers[i], self.table_names[i], update_db)
-            time.sleep(60)
+            time.sleep(self.wait_time)
 
     def main(self):
         if self.args.use_cached_data:

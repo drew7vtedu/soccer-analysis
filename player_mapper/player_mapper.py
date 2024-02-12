@@ -19,7 +19,7 @@ class PlayerMapper:
         self.fbref_data_query = """
         SELECT DISTINCT first_name, last_name, season
         FROM player_standard_stats
-        WHERE playing_time_min > 0
+        WHERE playing_time_min::FLOAT::INT > 0
         """
         self.config = util.load_config(self.args.config_path)
         self.sql_conn_str = f"postgresql+psycopg2://{self.config['sql_user']}:{self.config['sql_password']}@localhost:{self.config['sql_port']}/premier_league_data"
@@ -257,9 +257,6 @@ class PlayerMapper:
         if row.first_name == 'Lyanco' and row.last_name == 'Lyanco':
             return ('Lyanco Evangelista', 'Silveira Neves Vojnovic')
 
-        if row.first_name == 'Lyanco' and row.last_name == 'Lyanco':
-            return ('Lyanco Evangelista', 'Silveira Neves Vojnovic')
-
         if row.first_name == 'Angeliño' and row.last_name == 'Angeliño':
             return ('José Ángel', 'Esmorís Tasende')
 
@@ -268,6 +265,12 @@ class PlayerMapper:
 
         if row.first_name == 'Jesuran' and row.last_name == 'Rak Sakyi':
             return ('Jesurun', 'Rak-Sakyi')
+
+        if row.first_name == 'Mohamed' and row.last_name == 'Salah':
+            return ('Mohamed', 'Salah')
+
+        if row.first_name == 'Bernardo' and row.last_name == 'Silva':
+            return ('Bernardo', 'Fernandes da Silva Junior')
         
         return (None, None)
 
@@ -278,14 +281,40 @@ class PlayerMapper:
         """
         return df.loc[~((df.first_name == 'Karl') & (df.last_name == 'Jakob Hein') & (df.season == '21/22'))].copy()
 
+    def _format_match_df_(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Helper method to rename and re order columns after matching
+        """
+        res = df.copy()
+        mapper={
+            'last_name': 'fbref_last_name',
+            'first_name': 'fbref_first_name',
+            'second_name': 'fpl_second_name'}
+
+        if 'first_name_x' in res.columns:
+            assert 'first_name_y' in res.columns, "expected both '*_x' and '*_y'in column names"
+            mapper['first_name_x'] = 'fbref_first_name'
+            mapper['first_name_y'] = 'fpl_first_name'
+        else:
+            res['fpl_first_name'] = res['first_name'].copy()
+
+        res.rename(mapper=mapper, axis=1, inplace=True)
+        return res[['fbref_first_name', 'fbref_last_name', 'fpl_first_name', 'fpl_second_name', 'season']]
+
     def map_players(self, fbref_df: pd.DataFrame, fpl_df: pd.DataFrame) -> pd.DataFrame:
         """
         Match players between 2 dataframes
         """
-        df = fbref_df.merge(fpl_df, how='outer', left_on=['season', 'first_name', 'last_name'], right_on=['season', 'first_name', 'second_name'])
+        fpl_df = fpl_df.loc[fpl_df.total_points > 0]
+        pdb.set_trace()
+        df = fbref_df.merge(fpl_df, how='left', left_on=['season', 'first_name', 'last_name'], right_on=['season', 'first_name', 'second_name'])
+        matches = fbref_df.merge(fpl_df, how='inner', left_on=['season', 'first_name', 'last_name'], right_on=['season', 'first_name', 'second_name'])
+        # matches have the same first name and columns must be renamed and reordered
+        matches = self._format_match_df_(matches)
+
         remainder = df.loc[df.second_name.isna()].copy()
-        remainder.drop(columns=[x for x in fpl_df.columns if x != 'first_name' and x != 'season'], inplace=True)
-        matches = pd.DataFrame(columns=['fbref_first_name', 'fbref_last_name', 'fpl_first_name', 'fpl_second_name', 'season'])
+        remainder.drop(columns=[x for x in remainder.columns if x not in ['first_name', 'last_name', 'season']], inplace=True)
+
         drop_indexes = []
         for index, row in remainder.iterrows():
             hardcode_matches = self.check_hardcodes(row)
@@ -296,107 +325,130 @@ class PlayerMapper:
                 drop_indexes.append(index)
                 continue
 
-            possible_matches = fpl_df.loc[((fpl_df.first_name == row.first_name)|(fpl_df.second_name == row.last_name))
-            &(fpl_df.season == row.season)].copy()
-            if len(possible_matches) == 0:
-                possible_matches = fpl_df[fpl_df.season == row.season].copy()
-
-            elif len(possible_matches) == 1:
-                matches.loc[len(matches)] = [row.first_name, row.last_name, 
-                  possible_matches.first_name.values[0], possible_matches.second_name.values[0],
-                  row.season]
-                drop_indexes.append(index)
-                continue
-
-            possible_matches['first_name_match'] = possible_matches.first_name.apply(lambda x: x == row.first_name)
-            possible_matches['last_name_match'] = possible_matches.second_name.apply(lambda x: x == row.last_name)
-            possible_matches['first_name_in'] = possible_matches.first_name.apply(lambda x: row.first_name in x)
-            possible_matches['last_name_in'] = possible_matches.second_name.apply(lambda x: row.last_name in x)
-
-            match = possible_matches.loc[((possible_matches.first_name_match)&(possible_matches.last_name_in))
-                |((possible_matches.first_name_in)&(possible_matches.last_name_match))]
-            if len(match) == 1:
-                matches.loc[len(matches)] = [row.first_name, row.last_name, 
-                match.first_name.values[0], match.second_name.values[0], row.season]
-                drop_indexes.append(index)
-                continue
-
-            possible_matches['stripped_first_name'] = possible_matches.first_name.apply(lambda x: self.strip_accents(x))
-            possible_matches['stripped_last_name'] = possible_matches.second_name.apply(lambda x: self.strip_accents(x))
-
-            possible_matches['first_name_match'] = possible_matches.stripped_first_name.apply(lambda x: x == self.strip_accents(row.first_name))
-            possible_matches['last_name_match'] = possible_matches.stripped_last_name.apply(lambda x: x == self.strip_accents(row.last_name))
-            possible_matches['first_name_in'] = possible_matches.stripped_first_name.apply(lambda x: self.strip_accents(row.first_name) in x)
-            possible_matches['last_name_in'] = possible_matches.stripped_last_name.apply(lambda x: self.strip_accents(row.last_name) in x)
-
-            match = possible_matches.loc[((possible_matches.first_name_match)&(possible_matches.last_name_in))
-                  |((possible_matches.first_name_in)&(possible_matches.last_name_match))]
-            if len(match) == 1:
-                matches.loc[len(matches)] = [row.first_name, row.last_name, 
-                match.first_name.values[0], match.second_name.values[0], row.season]
-                drop_indexes.append(index)
-                continue
-
-            possible_matches['nickname_first_name'] = possible_matches.first_name.apply(lambda x: self.add_nicknames(x))
-
-            possible_matches['first_name_match'] = possible_matches.nickname_first_name.apply(lambda x: x == row.first_name)
-            possible_matches['first_name_in'] = possible_matches.nickname_first_name.apply(lambda x: row.first_name in x)
-            match = possible_matches.loc[((possible_matches.first_name_match)&(possible_matches.last_name_in))
-                  |((possible_matches.first_name_in)&(possible_matches.last_name_match))]
-            if len(match) == 1:
-                matches.loc[len(matches)] = [row.first_name, row.last_name, 
-                match.first_name.values[0], match.second_name.values[0], row.season]
-                drop_indexes.append(index)
-                continue
-
         remainder = remainder.loc[~remainder.index.isin(drop_indexes)]
-        possible_matches = fpl_df[fpl_df.season == row.season].copy()
-        for index, row in remainder.iterrows():
-            possible_matches['first_name_in'] = possible_matches.first_name.apply(lambda x: row.first_name in x)
-            possible_matches['last_name_in'] = possible_matches.second_name.apply(lambda x: row.last_name in x)
-            match = possible_matches.loc[(possible_matches.first_name_in)&(possible_matches.last_name_in)]
-            if len(match) == 1:
-                matches.loc[len(matches)] = [row.first_name, row.last_name, 
-                match.first_name.values[0], match.second_name.values[0], row.season]
-                drop_indexes.append(index)
-                continue
 
-        remainder = remainder.loc[~remainder.index.isin(drop_indexes)]
-        possible_matches = fpl_df[fpl_df.season == row.season].copy()
-        for index, row in remainder.iterrows():
-            possible_matches['stripped_first_name'] = possible_matches.first_name.apply(lambda x: self.strip_accents(x))
-            possible_matches['stripped_last_name'] = possible_matches.second_name.apply(lambda x: self.strip_accents(x))
+        # try removing accents and matching
+        remainder['stripped_first_name'] = remainder.first_name.apply(lambda x: self.strip_accents(x))
+        remainder['stripped_last_name'] = remainder.last_name.apply(lambda x: self.strip_accents(x))
+        fpl_df['stripped_first_name'] = fpl_df.first_name.apply(lambda x: self.strip_accents(x))
+        fpl_df['stripped_last_name'] = fpl_df.second_name.apply(lambda x: self.strip_accents(x))
+        df_stripped = remainder.merge(fpl_df, how='left', on=['stripped_first_name', 'stripped_last_name', 'season'])
+        stripped_matches = remainder.merge(fpl_df, how='inner', on=['stripped_first_name', 'stripped_last_name', 'season'])
+        matches = pd.concat([matches, self._format_match_df_(stripped_matches)]).reset_index(drop=True)
 
-            possible_matches['first_name_in'] = possible_matches.stripped_first_name.apply(lambda x: row.first_name in x)
-            possible_matches['last_name_in'] = possible_matches.stripped_last_name.apply(lambda x: row.last_name in x)
+        remainder = df_stripped.loc[df_stripped.second_name.isna()].copy()
+        pdb.set_trace()
+        remainder.drop(columns=[x for x in remainder.columns if x not in ['first_name_x', 'last_name', 'season']], inplace=True)
+        remainder.rename(mapper={'first_name_x': 'first_name'}, axis=1, inplace=True)
 
-            match = possible_matches.loc[(possible_matches.first_name_in)&(possible_matches.last_name_in)]
-            if len(match) == 1:
-                matches.loc[len(matches)] = [row.first_name, row.last_name, 
-                match.first_name.values[0], match.second_name.values[0], row.season]
-                drop_indexes.append(index)
-                continue
+        # matches = pd.DataFrame(columns=['fbref_first_name', 'fbref_last_name', 'fpl_first_name', 'fpl_second_name', 'season'])
+        
 
-        remainder = remainder.loc[~remainder.index.isin(drop_indexes)]
-        possible_matches = fpl_df[fpl_df.season == row.season].copy()
-        for index, row in remainder.iterrows():
-            possible_matches['stripped_first_name'] = possible_matches.first_name.apply(lambda x: self.strip_accents(x))
-            possible_matches['stripped_last_name'] = possible_matches.second_name.apply(lambda x: self.strip_accents(x))
+            # possible_matches = fpl_df.loc[((fpl_df.first_name == row.first_name)|(fpl_df.second_name == row.last_name))
+            # &(fpl_df.season == row.season)].copy()
+            # if len(possible_matches) == 0:
+            #     possible_matches = fpl_df[fpl_df.season == row.season].copy()
 
-            possible_matches['first_name_in'] = possible_matches.stripped_first_name.apply(lambda x: self.strip_accents(row.first_name) in x)
-            possible_matches['last_name_in'] = possible_matches.stripped_last_name.apply(lambda x: self.strip_accents(row.last_name) in x)
+            # elif len(possible_matches) == 1:
+            #     matches.loc[len(matches)] = [row.first_name, row.last_name, 
+            #       possible_matches.first_name.values[0], possible_matches.second_name.values[0],
+            #       row.season]
+            #     drop_indexes.append(index)
+            #     continue
 
-            match = possible_matches.loc[(possible_matches.first_name_in)&(possible_matches.last_name_in)]
-            if len(match) == 1:
-                matches.loc[len(matches)] = [row.first_name, row.last_name, 
-                match.first_name.values[0], match.second_name.values[0], row.season]
-                drop_indexes.append(index)
-                continue
+            # possible_matches = fpl_df[fpl_df.season == row.season].copy()
+
+            # possible_matches['first_name_match'] = possible_matches.first_name.apply(lambda x: x == row.first_name)
+            # possible_matches['last_name_match'] = possible_matches.second_name.apply(lambda x: x == row.last_name)
+            # possible_matches['first_name_in'] = possible_matches.first_name.apply(lambda x: row.first_name in x)
+            # possible_matches['last_name_in'] = possible_matches.second_name.apply(lambda x: row.last_name in x)
+
+            # match = possible_matches.loc[((possible_matches.first_name_match)&(possible_matches.last_name_in))
+            #     |((possible_matches.first_name_in)&(possible_matches.last_name_match))]
+            # if len(match) == 1:
+            #     matches.loc[len(matches)] = [row.first_name, row.last_name, 
+            #     match.first_name.values[0], match.second_name.values[0], row.season]
+            #     drop_indexes.append(index)
+            #     continue
+
+            # possible_matches['stripped_first_name'] = possible_matches.first_name.apply(lambda x: self.strip_accents(x))
+            # possible_matches['stripped_last_name'] = possible_matches.second_name.apply(lambda x: self.strip_accents(x))
+
+            # possible_matches['first_name_match'] = possible_matches.stripped_first_name.apply(lambda x: x == self.strip_accents(row.first_name))
+            # possible_matches['last_name_match'] = possible_matches.stripped_last_name.apply(lambda x: x == self.strip_accents(row.last_name))
+            # possible_matches['first_name_in'] = possible_matches.stripped_first_name.apply(lambda x: self.strip_accents(row.first_name) in x)
+            # possible_matches['last_name_in'] = possible_matches.stripped_last_name.apply(lambda x: self.strip_accents(row.last_name) in x)
+
+            # match = possible_matches.loc[((possible_matches.first_name_match)&(possible_matches.last_name_in))
+            #       |((possible_matches.first_name_in)&(possible_matches.last_name_match))]
+            # if len(match) == 1:
+            #     matches.loc[len(matches)] = [row.first_name, row.last_name, 
+            #     match.first_name.values[0], match.second_name.values[0], row.season]
+            #     drop_indexes.append(index)
+            #     continue
+
+            # possible_matches['nickname_first_name'] = possible_matches.first_name.apply(lambda x: self.add_nicknames(x))
+
+            # possible_matches['first_name_match'] = possible_matches.nickname_first_name.apply(lambda x: x == row.first_name)
+            # possible_matches['first_name_in'] = possible_matches.nickname_first_name.apply(lambda x: row.first_name in x)
+            # match = possible_matches.loc[((possible_matches.first_name_match)&(possible_matches.last_name_in))
+            #       |((possible_matches.first_name_in)&(possible_matches.last_name_match))]
+            # if len(match) == 1:
+            #     matches.loc[len(matches)] = [row.first_name, row.last_name, 
+            #     match.first_name.values[0], match.second_name.values[0], row.season]
+            #     drop_indexes.append(index)
+            #     continue
+
+        # remainder = remainder.loc[~remainder.index.isin(drop_indexes)]
+        # possible_matches = fpl_df[fpl_df.season == row.season].copy()
+        # for index, row in remainder.iterrows():
+        #     possible_matches['first_name_in'] = possible_matches.first_name.apply(lambda x: row.first_name in x)
+        #     possible_matches['last_name_in'] = possible_matches.second_name.apply(lambda x: row.last_name in x)
+        #     match = possible_matches.loc[(possible_matches.first_name_in)&(possible_matches.last_name_in)]
+        #     if len(match) == 1:
+        #         matches.loc[len(matches)] = [row.first_name, row.last_name, 
+        #         match.first_name.values[0], match.second_name.values[0], row.season]
+        #         drop_indexes.append(index)
+        #         continue
+
+        # remainder = remainder.loc[~remainder.index.isin(drop_indexes)]
+        # possible_matches = fpl_df[fpl_df.season == row.season].copy()
+        # for index, row in remainder.iterrows():
+        #     possible_matches['stripped_first_name'] = possible_matches.first_name.apply(lambda x: self.strip_accents(x))
+        #     possible_matches['stripped_last_name'] = possible_matches.second_name.apply(lambda x: self.strip_accents(x))
+
+        #     possible_matches['first_name_in'] = possible_matches.stripped_first_name.apply(lambda x: row.first_name in x)
+        #     possible_matches['last_name_in'] = possible_matches.stripped_last_name.apply(lambda x: row.last_name in x)
+
+        #     match = possible_matches.loc[(possible_matches.first_name_in)&(possible_matches.last_name_in)]
+        #     if len(match) == 1:
+        #         matches.loc[len(matches)] = [row.first_name, row.last_name, 
+        #         match.first_name.values[0], match.second_name.values[0], row.season]
+        #         drop_indexes.append(index)
+        #         continue
+
+        # remainder = remainder.loc[~remainder.index.isin(drop_indexes)]
+        # possible_matches = fpl_df[fpl_df.season == row.season].copy()
+        # for index, row in remainder.iterrows():
+        #     possible_matches['stripped_first_name'] = possible_matches.first_name.apply(lambda x: self.strip_accents(x))
+        #     possible_matches['stripped_last_name'] = possible_matches.second_name.apply(lambda x: self.strip_accents(x))
+
+        #     possible_matches['first_name_in'] = possible_matches.stripped_first_name.apply(lambda x: self.strip_accents(row.first_name) in x)
+        #     possible_matches['last_name_in'] = possible_matches.stripped_last_name.apply(lambda x: self.strip_accents(row.last_name) in x)
+
+        #     match = possible_matches.loc[(possible_matches.first_name_in)&(possible_matches.last_name_in)]
+        #     if len(match) == 1:
+        #         matches.loc[len(matches)] = [row.first_name, row.last_name, 
+        #         match.first_name.values[0], match.second_name.values[0], row.season]
+        #         drop_indexes.append(index)
+        #         continue
 
         remainder = remainder.loc[~remainder.index.isin(drop_indexes)]
         if len(remainder) != 0:
-            print('Warning: Unmatched players remain')
+            print(f'Warning: {len(remainder)}Unmatched players remain')
             print(remainder)
+
+        pdb.set_trace()
         
         return matches
                     

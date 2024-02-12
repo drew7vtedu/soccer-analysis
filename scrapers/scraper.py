@@ -36,6 +36,7 @@ class Scraper:
         self.sql_conn_str = f"postgresql+psycopg2://{self.config['sql_user']}:{self.config['sql_password']}@localhost:{self.config['sql_port']}/premier_league_data"
         self.raw_data_path = 'data/raw/'
         self.proc_data_path = 'data/processed/'
+        self.wait_time = 30 # seconds to wait between scraping tables
 
     @staticmethod
     def init_command_line_args():
@@ -76,8 +77,8 @@ class Scraper:
 
         result = dict()
         for row in rows:
-            name = row.find('td',{"data-stat":"squad"}).text.strip().encode().decode("utf-8").replace("\'", '') # Fixes issue with teams like Nott'ham Forest
-            url = row.find('td',{"data-stat":"squad"}).find('a')['href']
+            name = row.find('td',{"data-stat":"team"}).text.strip().encode().decode("utf-8").replace("\'", '') # Fixes issue with teams like Nott'ham Forest
+            url = row.find('td',{"data-stat":"team"}).find('a')['href']
             result[name] = url
         return result 
 
@@ -99,12 +100,13 @@ class Scraper:
         """
         Load data which has been saved in csvs.
         """
-        dir = os.listdir(self.args.raw_data_path)
+        dir = os.listdir(self.raw_data_path)
+        dir = [x for x in dir if x != '.DS_Store']
         for team in dir:
-            teams = os.listdir(self.args.raw_data_path + team)
+            teams = os.listdir(self.raw_data_path + team)
             csvs = [x for x in teams if '.csv' in x]
             for file in csvs:
-                df = pd.read_csv(self.raw_data_path+team+file)
+                df = pd.read_csv(self.raw_data_path+team+'/'+file)
                 if push_to_db:
                     self.push_to_sql(df, file[:-4])
 

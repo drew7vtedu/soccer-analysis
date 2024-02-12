@@ -14,6 +14,7 @@ CREATE TABLE league_table (
     ga INTEGER NOT NULL,
     gd TEXT NOT NULL,
     pts INTEGER NOT NULL,
+    pts_per_mp FLOAT,
     xg FLOAT NOT NULL,
     xga FLOAT NOT NULL,
     xgd FLOAT NOT NULL,
@@ -37,7 +38,7 @@ CREATE TABLE home_away_league_table (
     home_ga INTEGER NOT NULL,
     home_gd TEXT NOT NULL,
     home_pts INTEGER NOT NULL,
-    home_pts_per_g FLOAT NOT NULL,
+    home_pts_per_mp FLOAT NOT NULL,
     home_xg FLOAT NOT NULL,
     home_xga FLOAT NOT NULL,
     home_xgd FLOAT NOT NULL,
@@ -50,7 +51,7 @@ CREATE TABLE home_away_league_table (
     away_ga INTEGER NOT NULL,
     away_gd TEXT NOT NULL,
     away_pts INTEGER NOT NULL,
-    away_pts_per_g FLOAT NOT NULL,
+    away_pts_per_mp FLOAT NOT NULL,
     away_xg FLOAT NOT NULL,
     away_xga FLOAT NOT NULL,
     away_xgd FLOAT NOT NULL,
@@ -62,7 +63,7 @@ CREATE TABLE squad_standard_stats (
     season TEXT NOT NULL,
     squad TEXT NOT NULL,
     num_pl INT NOT NULL,
-    age FLOAT NOT NULL, --weighted by minutes
+    age FLOAT NOT NULL, -- weighted by minutes
     poss FLOAT NOT NULL,
     playing_time_mp INTEGER NOT NULL,
     playing_time_starts INTEGER NOT NULL,
@@ -70,6 +71,7 @@ CREATE TABLE squad_standard_stats (
     playing_time_full_90s FLOAT NOT NULL,
     performance_gls INTEGER NOT NULL,
     performance_ast INTEGER NOT NULL,
+    performance_g_plus_a INTEGER NOT NULL,
     performance_g_minus_pk INTEGER NOT NULL,
     performance_pk INTEGER NOT NULL, -- penalties scored
     performance_pkatt INTEGER NOT NULL,
@@ -82,13 +84,15 @@ CREATE TABLE squad_standard_stats (
     per_90_minutes_g_plus_a_minus_pk FLOAT NOT NULL,
     expected_xg FLOAT NOT NULL,
     expected_npxg FLOAT NOT NULL,
-    expected_xa FLOAT NOT NULL,
-    expected_npxg_plus_xa FLOAT NOT NULL,
+    expected_xag FLOAT NOT NULL,
+    expected_npxg_plus_xag FLOAT NOT NULL,
+    progression_prgc INTEGER NOT NULL,
+    progression_prgp INTEGER NOT NULL,
     per_90_minutes_xg FLOAT NOT NULL,
-    per_90_minutes_xa FLOAT NOT NULL,
-    per_90_minutes_xg_plus_xa FLOAT NOT NULL,
+    per_90_minutes_xag FLOAT NOT NULL,
+    per_90_minutes_xg_plus_xag FLOAT NOT NULL,
     per_90_minutes_npxg FLOAT NOT NULL,
-    per_90_minutes_npxg_plus_xa FLOAT NOT NULL,
+    per_90_minutes_npxg_plus_xag FLOAT NOT NULL,
     PRIMARY KEY(season, squad)
 );
 
@@ -116,13 +120,15 @@ CREATE TABLE opponent_stats_squad_standard_stats (
     per_90_minutes_g_plus_a_minus_pk FLOAT NOT NULL,
     expected_xg FLOAT NOT NULL,
     expected_npxg FLOAT NOT NULL,
-    expected_xa FLOAT NOT NULL,
-    expected_npxg_plus_xa FLOAT NOT NULL,
+    expected_xag FLOAT NOT NULL,
+    expected_npxg_plus_xag FLOAT NOT NULL,
+    progression_prgc INTEGER NOT NULL,
+    progression_prgp INTEGER NOT NULL,
     per_90_minutes_xg FLOAT NOT NULL,
-    per_90_minutes_xa FLOAT NOT NULL,
-    per_90_minutes_xg_plus_xa FLOAT NOT NULL,
+    per_90_minutes_xag FLOAT NOT NULL,
+    per_90_minutes_xg_plus_xag FLOAT NOT NULL,
     per_90_minutes_npxg FLOAT NOT NULL,
-    per_90_minutes_npxg_plus_xa FLOAT NOT NULL,
+    per_90_minutes_npxg_plus_xag FLOAT NOT NULL,
     PRIMARY KEY(season, squad)
 );
 
@@ -314,13 +320,14 @@ CREATE TABLE squad_passing (
     long_att INTEGER NOT NULL,
     long_cmp_pct FLOAT NOT NULL,
     ast INTEGER NOT NULL,
+    xag FLOAT NOT NULL,
     xa FLOAT NOT NULL,
-    a_minus_xa FLOAT NOT NULL,
+    a_minus_xag FLOAT NOT NULL,
     kp INTEGER NOT NULL, --key passes
     final_third INTEGER NOT NULL, --does not include set pieces
     ppa INTEGER NOT NULL, --completed passes into the penalty area not including set pieces
     crspa INTEGER NOT NULL,
-    prog INTEGER NOT NULL, --excludes passes from defending 40%
+    prgp INTEGER NOT NULL, --excludes passes from defending 40%
     PRIMARY KEY(season, squad)
 );
 
@@ -344,13 +351,13 @@ CREATE TABLE opponent_stats_squad_passing (
     long_att INTEGER NOT NULL,
     long_cmp_pct FLOAT NOT NULL,
     ast INTEGER NOT NULL,
-    xa FLOAT NOT NULL,
-    a_minus_xa FLOAT NOT NULL,
+    xag FLOAT NOT NULL,
+    a_minus_xag FLOAT NOT NULL,
     kp INTEGER NOT NULL, --key passes
     final_third INTEGER NOT NULL, --does not include set pieces
     ppa INTEGER NOT NULL, --completed passes into the penalty area not including set pieces
     crspa INTEGER NOT NULL,
-    prog INTEGER NOT NULL, --excludes passes from defending 40%
+    prgp INTEGER NOT NULL, --excludes passes from defending 40%
     PRIMARY KEY(season, squad)
 );
 
@@ -364,25 +371,24 @@ CREATE TABLE squad_pass_types (
     pass_types_dead INTEGER NOT NULL,
     pass_types_fk INTEGER NOT NULL,
     pass_types_tb INTEGER NOT NULL, --completed pass sent between back defenders into open space
-    pass_types_press INTEGER NOT NULL, --passes made while under pressure
+    pass_types_press INTEGER, --passes made while under pressure
     pass_types_sw INTEGER NOT NULL, --passes that travel more than 40 yards of the width of the pitch
     pass_types_crs INTEGER NOT NULL,
+    pass_types_ti INTEGER NOT NULL,
     pass_types_ck INTEGER NOT NULL,
     corner_kicks_in INTEGER NOT NULL,
     corner_kicks_out INTEGER NOT NULL,
     corner_kicks_str INTEGER NOT NULL, --straight corner kicks
-    height_ground INTEGER NOT NULL,
-    height_low INTEGER NOT NULL,
-    height_high INTEGER NOT NULL,
-    body_parts_left INTEGER NOT NULL,
-    body_parts_right INTEGER NOT NULL,
-    body_parts_head INTEGER NOT NULL,
-    body_parts_ti INTEGER NOT NULL, -- throw ins taken
-    body_parts_other INTEGER NOT NULL,
+    height_ground INTEGER,
+    height_low INTEGER,
+    height_high INTEGER,
+    body_parts_left INTEGER,
+    body_parts_right INTEGER,
+    body_parts_head INTEGER,
+    body_parts_ti INTEGER, -- throw ins taken
+    body_parts_other INTEGER,
     outcomes_cmp INTEGER NOT NULL,
     outcomes_off INTEGER NOT NULL,
-    outcomes_out INTEGER NOT NULL,
-    outcomes_int INTEGER NOT NULL,
     outcomes_blocks INTEGER NOT NULL,
     PRIMARY KEY(season, squad)
 );
@@ -397,25 +403,24 @@ CREATE TABLE opponent_stats_squad_pass_types (
     pass_types_dead INTEGER NOT NULL,
     pass_types_fk INTEGER NOT NULL,
     pass_types_tb INTEGER NOT NULL, --completed pass sent between back defenders into open space
-    pass_types_press INTEGER NOT NULL, --passes made while under pressure
+    pass_types_press INTEGER, --passes made while under pressure
     pass_types_sw INTEGER NOT NULL, --passes that travel more than 40 yards of the width of the pitch
     pass_types_crs INTEGER NOT NULL,
+    pass_types_ti INTEGER NOT NULL,
     pass_types_ck INTEGER NOT NULL,
     corner_kicks_in INTEGER NOT NULL,
     corner_kicks_out INTEGER NOT NULL,
     corner_kicks_str INTEGER NOT NULL, --straight corner kicks
-    height_ground INTEGER NOT NULL,
-    height_low INTEGER NOT NULL,
-    height_high INTEGER NOT NULL,
-    body_parts_left INTEGER NOT NULL,
-    body_parts_right INTEGER NOT NULL,
-    body_parts_head INTEGER NOT NULL,
-    body_parts_ti INTEGER NOT NULL, -- throw ins taken
-    body_parts_other INTEGER NOT NULL,
+    height_ground INTEGER,
+    height_low INTEGER,
+    height_high INTEGER,
+    body_parts_left INTEGER,
+    body_parts_right INTEGER,
+    body_parts_head INTEGER,
+    body_parts_ti INTEGER, -- throw ins taken
+    body_parts_other INTEGER,
     outcomes_cmp INTEGER NOT NULL,
     outcomes_off INTEGER NOT NULL,
-    outcomes_out INTEGER NOT NULL,
-    outcomes_int INTEGER NOT NULL,
     outcomes_blocks INTEGER NOT NULL,
     PRIMARY KEY(season, squad)
 );
@@ -429,7 +434,7 @@ CREATE TABLE squad_goal_and_shot_creation (
     sca_sca90 FLOAT NOT NULL,
     sca_types_passlive INTEGER NOT NULL,
     sca_types_passdead INTEGER NOT NULl,
-    sca_types_drib INTEGER NOT NULL,
+    sca_types_to INTEGER NOT NULL,
     sca_types_sh INTEGER NOT NULL,
     sca_types_fld INTEGER NOT NULL,
     sca_types_def INTEGER NOT NULL, -- defensive actions that lead to a shot attempt
@@ -437,7 +442,7 @@ CREATE TABLE squad_goal_and_shot_creation (
     gca_gca90 FLOAT NOT NULL,
     gca_types_passlive INTEGER NOT NULL,
     gca_types_passdead INTEGER NOT NULL,
-    gca_types_drib INTEGER NOT NULL,
+    gca_types_to INTEGER NOT NULL,
     gca_types_sh INTEGER NOT NULL,
     gca_types_fld INTEGER NOT NULL,
     gca_types_def INTEGER NOT NULL, -- defensive actions that lead to a goal
@@ -453,7 +458,7 @@ CREATE TABLE opponent_stats_squad_goal_and_shot_creation (
     sca_sca90 FLOAT NOT NULL,
     sca_types_passlive INTEGER NOT NULL,
     sca_types_passdead INTEGER NOT NULl,
-    sca_types_drib INTEGER NOT NULL,
+    sca_types_to INTEGER NOT NULL,
     sca_types_sh INTEGER NOT NULL,
     sca_types_fld INTEGER NOT NULL,
     sca_types_def INTEGER NOT NULL, -- defensive actions that lead to a shot attempt
@@ -461,8 +466,7 @@ CREATE TABLE opponent_stats_squad_goal_and_shot_creation (
     gca_gca90 FLOAT NOT NULL,
     gca_types_passlive INTEGER NOT NULL,
     gca_types_passdead INTEGER NOT NULL,
-    gca_types_drib INTEGER NOT NULL,
-    gca_types_sh INTEGER NOT NULL,
+    gca_types_to INTEGER NOT NULL,
     gca_types_fld INTEGER NOT NULL,
     gca_types_def INTEGER NOT NULL, -- defensive actions that lead to a goal
     PRIMARY KEY(season, squad)
@@ -478,19 +482,19 @@ CREATE TABLE squad_defensive_actions (
     tackles_def_3rd INTEGER NOT NULL,
     tackles_mid_3rd INTEGER NOT NULl,
     tackles_att_3rd INTEGER NOT NULL,
-    vs_dribbles_tkl INTEGER NOT NULL,
-    vs_dribbles_att INTEGER NOT NULL,
-    vs_dribbles_tkl_pct FLOAT NOT NULL,
-    vs_dribbles_past INTEGER NOT NULL, -- num times dribbled past by an opposing player
-    pressures_press INTEGER NOT NULL, -- num times applying pressure
-    pressures_succ INTEGER NOT NULL,
-    pressures_pct FLOAT NOT NULL, -- successful pressure pct
-    pressures_def_3rd INTEGER NOT NULL,
-    pressures_mid_3rd INTEGER NOT NULL,
-    pressures_att_3rd INTEGER NOT NULL,
+    challenges_tkl INTEGER NOT NULL,
+    challenges_att INTEGER NOT NULL,
+    challenges_tkl_pct FLOAT NOT NULL,
+    challenges_lost INTEGER NOT NULL, -- num times dribbled past by an opposing player
+    -- pressures_press INTEGER NOT NULL, -- num times applying pressure
+    -- pressures_succ INTEGER NOT NULL,
+    -- pressures_pct FLOAT NOT NULL, -- successful pressure pct
+    -- pressures_def_3rd INTEGER NOT NULL,
+    -- pressures_mid_3rd INTEGER NOT NULL,
+    -- pressures_att_3rd INTEGER NOT NULL,
     blocks_blocks INTEGER NOT NULL,
     blocks_sh INTEGER NOT NULL,
-    blocks_shsv INTEGER NOT NULL, -- nunmber of times blocking a shot that was on target
+    -- blocks_shsv INTEGER NOT NULL, -- nunmber of times blocking a shot that was on target
     blocks_pass INTEGER NOT NULL,
     interceptions INTEGER NOT NULL, 
     tkl_plus_int INTEGER NOT NULL,
@@ -509,19 +513,19 @@ CREATE TABLE opponent_stats_squad_defensive_actions (
     tackles_def_3rd INTEGER NOT NULL,
     tackles_mid_3rd INTEGER NOT NULl,
     tackles_att_3rd INTEGER NOT NULL,
-    vs_dribbles_tkl INTEGER NOT NULL,
-    vs_dribbles_att INTEGER NOT NULL,
-    vs_dribbles_tkl_pct FLOAT NOT NULL,
-    vs_dribbles_past INTEGER NOT NULL, -- num times dribbled past by an opposing player
-    pressures_press INTEGER NOT NULL, -- num times applying pressure
-    pressures_succ INTEGER NOT NULL,
-    pressures_pct FLOAT NOT NULL, -- successful pressure pct
-    pressures_def_3rd INTEGER NOT NULL,
-    pressures_mid_3rd INTEGER NOT NULL,
-    pressures_att_3rd INTEGER NOT NULL,
+    challenges_tkl INTEGER NOT NULL,
+    challenges_att INTEGER NOT NULL,
+    challenges_tkl_pct FLOAT NOT NULL,
+    challenges_lost INTEGER NOT NULL, -- num times dribbled past by an opposing player
+    -- pressures_press INTEGER NOT NULL, -- num times applying pressure
+    -- pressures_succ INTEGER NOT NULL,
+    -- pressures_pct FLOAT NOT NULL, -- successful pressure pct
+    -- pressures_def_3rd INTEGER NOT NULL,
+    -- pressures_mid_3rd INTEGER NOT NULL,
+    -- pressures_att_3rd INTEGER NOT NULL,
     blocks_blocks INTEGER NOT NULL,
     blocks_sh INTEGER NOT NULL,
-    blocks_shsv INTEGER NOT NULL, -- nunmber of times blocking a shot that was on target
+    -- blocks_shsv INTEGER NOT NULL, -- nunmber of times blocking a shot that was on target
     blocks_pass INTEGER NOT NULL,
     interceptions INTEGER NOT NULL, 
     tkl_plus_int INTEGER NOT NULL,
@@ -710,6 +714,7 @@ CREATE TABLE player_standard_stats (
     playing_time_full_90s FLOAT NOT NULL,
     performance_gls INTEGER NOT NULL,
     performance_ast INTEGER NOT NULL,
+    performance_g_plus_a INTEGER NOT NULL,
     performance_g_minus_pk INTEGER NOT NULL,
     performance_pk INTEGER NOT NULL, -- penalties scored
     performance_pkatt INTEGER NOT NULL,
@@ -720,15 +725,18 @@ CREATE TABLE player_standard_stats (
     per_90_minutes_g_plus_a FLOAT,
     per_90_minutes_g_minus_pk FLOAT,
     per_90_minutes_g_plus_a_minus_pk FLOAT,
-    expected_xg FLOAT NOT NULL,
-    expected_npxg FLOAT NOT NULL,
-    expected_xa FLOAT NOT NULL,
-    expected_npxg_plus_xa FLOAT NOT NULL,
+    expected_xg FLOAT,
+    expected_npxg FLOAT,
+    expected_xag FLOAT,
+    expected_npxg_plus_xag FLOAT,
+    progression_prgc INTEGER,
+    progression_prgp INTEGER,
+    progression_prgr INTEGER,
     per_90_minutes_xg FLOAT,
-    per_90_minutes_xa FLOAT,
-    per_90_minutes_xg_plus_xa FLOAT,
+    per_90_minutes_xag FLOAT,
+    per_90_minutes_xg_plus_xag FLOAT,
     per_90_minutes_npxg FLOAT,
-    per_90_minutes_npxg_plus_xa FLOAT,
+    per_90_minutes_npxg_plus_xag FLOAT,
     PRIMARY KEY(season, team, first_name, last_name)
 );
 
@@ -749,9 +757,9 @@ CREATE TABLE scores_and_fixtures (
     xga FLOAT,
     poss INT, -- possession as pct of passes completed
     attendance INTEGER,
-    captain TEXT NOT NULL,
-    formation TEXT NOT NULL,
-    referee TEXT NOT NULL,
+    captain TEXT,
+    formation TEXT,
+    referee TEXT,
     notes TEXT,
     shootout_gf INT,
     shootout_ga INT,
@@ -770,20 +778,20 @@ CREATE TABLE player_goalkeeping (
     playing_time_starts INTEGER NOT NULL,
     playing_time_min TEXT NOT NULL,
     playing_time_full_90s FLOAT NOT NULL,
-    performance_ga INTEGER NOT NULL,
+    performance_ga INTEGER,
     performance_ga90 FLOAT,
-    performance_sota INTEGER NOT NULL, -- shots on target against
-    performance_saves INTEGER NOT NULL,
+    performance_sota INTEGER, -- shots on target against
+    performance_saves INTEGER,
     performance_save_pct FLOAT,
-    performance_w INTEGER NOT NULL,
-    performance_d INTEGER NOT NULL,
-    performance_l INTEGER NOT NULL,
-    performance_cs INTEGER NOT NULL,
+    performance_w INTEGER,
+    performance_d INTEGER,
+    performance_l INTEGER,
+    performance_cs INTEGER,
     performance_cs_pct FLOAT,
-    penalty_kicks_pkatt INTEGER NOT NULL,
-    penalty_kicks_pka INTEGER NOT NULL, -- pk goals allowed
-    penalty_kicks_pksv INTEGER NOT NULL,
-    penalty_kicks_pkm INTEGER NOT NULL,
+    penalty_kicks_pkatt INTEGER,
+    penalty_kicks_pka INTEGER, -- pk goals allowed
+    penalty_kicks_pksv INTEGER,
+    penalty_kicks_pkm INTEGER,
     penalty_kicks_save_pct FLOAT,
     PRIMARY KEY(season, team, first_name, last_name)
 );
@@ -797,29 +805,29 @@ CREATE TABLE player_advanced_goalkeeping (
     pos TEXT NOT NULL,
     age TEXT NOT NULL,
     full_90s FLOAT NOT NULL,
-    goals_ga INTEGER NOT NULL,
-    goals_pka INTEGER NOT NULL,
-    goals_fk INTEGER NOT NULL,
-    goals_ck INTEGER NOT NULL,
-    goals_og INTEGER NOT NULL,
-    expected_psxg FLOAT NOT NULL,
+    goals_ga INTEGER,
+    goals_pka INTEGER,
+    goals_fk INTEGER,
+    goals_ck INTEGER,
+    goals_og INTEGER,
+    expected_psxg FLOAT,
     expected_psxg_per_sot FLOAT,
     expected_ps_plus_minus FLOAT, -- psxg plus minus
     expected_per_90 FLOAT,
-    launched_cmp INTEGER NOT NULL,
-    launched_att INTEGER NOT NULL,
+    launched_cmp INTEGER,
+    launched_att INTEGER,
     launched_cmp_pct FLOAT,
-    passes_att INTEGER NOT NULL,
-    passes_thr INTEGER NOT NULL,
+    passes_att_gk INTEGER, -- passes attempted minus goal kicks
+    passes_thr INTEGER,
     passes_launch_pct FLOAT,
     passes_avglen FLOAT,
-    goal_kicks_att INTEGER NOT NULL,
+    goal_kicks_att INTEGER,
     goal_kicks_launch_pct FLOAT,
     goal_kicks_avglen FLOAT,
-    crosses_opp INTEGER NOT NULL,
-    crosses_stp INTEGER NOT NULL,
+    crosses_opp INTEGER,
+    crosses_stp INTEGER,
     crosses_stp_pct FLOAT,
-    sweeper_num_opa INTEGER NOT NULL,
+    sweeper_num_opa INTEGER,
     sweeper_num_opa_per_90 FLOAT,
     sweeper_avgdist FLOAT,
     PRIMARY KEY(season, team, first_name, last_name)
@@ -864,27 +872,28 @@ CREATE TABLE player_passing (
     age TEXT NOT NULL,
     full_90s FLOAT NOT NULL,
     total_cmp INTEGER,
-    total_att INTEGER NOT NULL,
+    total_att INTEGER,
     total_cmp_pct FLOAT,
-    total_totdist INTEGER NOT NULL, --total distance in yards passes have travelled in any direction
-    total_prgdist INTEGER NOT NULL,
+    total_totdist INTEGER, --total distance in yards passes have travelled in any direction
+    total_prgdist INTEGER,
     short_cmp INTEGER, -- short = 5 < x < 15 yards
-    short_att INTEGER NOT NULL,
+    short_att INTEGER,
     short_cmp_pct FLOAT,
     medium_cmp INTEGER, -- medium = 15 < x < 30 yards
-    medium_att INTEGER NOT NULL,
+    medium_att INTEGER,
     medium_cmp_pct FLOAT,
     long_cmp INTEGER, -- long = x > 30 yards
-    long_att INTEGER NOT NULL,
+    long_att INTEGER,
     long_cmp_pct FLOAT,
-    ast INTEGER NOT NULL,
-    xa FLOAT NOT NULL,
-    a_minus_xa FLOAT,
-    kp INTEGER NOT NULL, --key passes
-    final_third INTEGER NOT NULL, --does not include set pieces
-    ppa INTEGER NOT NULL, --completed passes into the penalty area not including set pieces
-    crspa INTEGER NOT NULL,
-    prog INTEGER NOT NULL, --excludes passes from defending 40%
+    ast INTEGER,
+    xag FLOAT,
+    xa FLOAT,
+    a_minus_xag FLOAT,
+    kp INTEGER, --key passes
+    final_third INTEGER, --does not include set pieces
+    ppa INTEGER, --completed passes into the penalty area not including set pieces
+    crspa INTEGER,
+    prgp INTEGER, --excludes passes from defending 40%
     PRIMARY KEY(season, team, first_name, last_name)
 );
 
@@ -897,30 +906,29 @@ CREATE TABLE player_pass_types (
     pos TEXT NOT NULL,
     age TEXT NOT NULL,
     full_90s FLOAT NOT NULL,
-    att INTEGER NOT NULL,
-    pass_types_live INTEGER NOT NULL,
-    pass_types_dead INTEGER NOT NULL,
-    pass_types_fk INTEGER NOT NULL,
-    pass_types_tb INTEGER NOT NULL, --completed pass sent between back defenders into open space
-    pass_types_press INTEGER NOT NULL, --passes made while under pressure
-    pass_types_sw INTEGER NOT NULL, --passes that travel more than 40 yards of the width of the pitch
-    pass_types_crs INTEGER NOT NULL,
-    pass_types_ck INTEGER NOT NULL,
-    corner_kicks_in INTEGER NOT NULL,
-    corner_kicks_out INTEGER NOT NULL,
-    corner_kicks_str INTEGER NOT NULL, --straight corner kicks
-    height_ground INTEGER NOT NULL,
-    height_low INTEGER NOT NULL,
-    height_high INTEGER NOT NULL,
-    body_parts_left INTEGER NOT NULL,
-    body_parts_right INTEGER NOT NULL,
-    body_parts_head INTEGER NOT NULL,
-    body_parts_ti INTEGER NOT NULL, -- throw ins taken
-    body_parts_other INTEGER NOT NULL,
+    att INTEGER,
+    pass_types_live INTEGER,
+    pass_types_dead INTEGER,
+    pass_types_fk INTEGER,
+    pass_types_tb INTEGER, --completed pass sent between back defenders into open space
+    -- pass_types_press INTEGER NOT NULL, --passes made while under pressure
+    pass_types_sw INTEGER, --passes that travel more than 40 yards of the width of the pitch
+    pass_types_crs INTEGER,
+    pass_types_ti INTEGER,
+    pass_types_ck INTEGER,
+    corner_kicks_in INTEGER,
+    corner_kicks_out INTEGER,
+    corner_kicks_str INTEGER, --straight corner kicks
+    -- height_ground INTEGER NOT NULL,
+    -- height_low INTEGER NOT NULL,
+    -- height_high INTEGER NOT NULL,
+    -- body_parts_left INTEGER NOT NULL,
+    -- body_parts_right INTEGER NOT NULL,
+    -- body_parts_head INTEGER NOT NULL,
+    -- body_parts_ti INTEGER NOT NULL, -- throw ins taken
+    -- body_parts_other INTEGER NOT NULL,
     outcomes_cmp INTEGER,
     outcomes_off INTEGER,
-    outcomes_out INTEGER,
-    outcomes_int INTEGER,
     outcomes_blocks INTEGER,
     PRIMARY KEY(season, team, first_name, last_name)
 );
@@ -934,22 +942,22 @@ CREATE TABLE player_goal_and_shot_creation (
     pos TEXT NOT NULL,
     age TEXT NOT NULL,
     full_90s FLOAT,
-    sca_sca INTEGER NOT NULL, -- shot creating actions
+    sca_sca INTEGER, -- shot creating actions
     sca_sca90 FLOAT,
-    sca_types_passlive INTEGER NOT NULL,
-    sca_types_passdead INTEGER NOT NULl,
-    sca_types_drib INTEGER NOT NULL,
-    sca_types_sh INTEGER NOT NULL,
-    sca_types_fld INTEGER NOT NULL,
-    sca_types_def INTEGER NOT NULL, -- defensive actions that lead to a shot attempt
-    gca_gca INTEGER NOT NULL,
+    sca_types_passlive INTEGER,
+    sca_types_passdead INTEGER,
+    sca_types_to INTEGER,
+    sca_types_sh INTEGER,
+    sca_types_fld INTEGER, -- fouls drawn
+    sca_types_def INTEGER, -- defensive actions that lead to a shot attempt
+    gca_gca INTEGER,
     gca_gca90 FLOAT,
-    gca_types_passlive INTEGER NOT NULL,
-    gca_types_passdead INTEGER NOT NULL,
-    gca_types_drib INTEGER NOT NULL,
-    gca_types_sh INTEGER NOT NULL,
-    gca_types_fld INTEGER NOT NULL,
-    gca_types_def INTEGER NOT NULL, -- defensive actions that lead to a goal
+    gca_types_passlive INTEGER,
+    gca_types_passdead INTEGER,
+    gca_types_to INTEGER,
+    gca_types_sh INTEGER,
+    gca_types_fld INTEGER,
+    gca_types_def INTEGER, -- defensive actions that lead to a goal
     PRIMARY KEY(season, team, first_name, last_name)
 );
 
@@ -962,29 +970,29 @@ CREATE TABLE player_defensive_actions (
     pos TEXT NOT NULL,
     age TEXT NOT NULL,
     full_90s FLOAT,
-    tackles_tkl INTEGER NOT NULL,
-    tackles_tklw INTEGER NOT NULL,
-    tackles_def_3rd INTEGER NOT NULL,
-    tackles_mid_3rd INTEGER NOT NULl,
-    tackles_att_3rd INTEGER NOT NULL,
-    vs_dribbles_tkl INTEGER NOT NULL,
-    vs_dribbles_att INTEGER NOT NULL,
-    vs_dribbles_tkl_pct FLOAT,
-    vs_dribbles_past INTEGER NOT NULL, -- num times dribbled past by an opposing player
-    pressures_press INTEGER NOT NULL, -- num times applying pressure
-    pressures_succ INTEGER NOT NULL,
-    pressures_pct FLOAT, -- successful pressure pct
-    pressures_def_3rd INTEGER NOT NULL,
-    pressures_mid_3rd INTEGER NOT NULL,
-    pressures_att_3rd INTEGER NOT NULL,
-    blocks_blocks INTEGER NOT NULL,
-    blocks_sh INTEGER NOT NULL,
-    blocks_shsv INTEGER NOT NULL, -- nunmber of times blocking a shot that was on target
-    blocks_pass INTEGER NOT NULL,
-    interceptions INTEGER NOT NULL, 
-    tkl_plus_int INTEGER NOT NULL,
-    clr INTEGER NOT NULL,
-    err INTEGER NOT NULL, -- mistakes leading to an opponent shot
+    tackles_tkl INTEGER,
+    tackles_tklw INTEGER,
+    tackles_def_3rd INTEGER,
+    tackles_mid_3rd INTEGER,
+    tackles_att_3rd INTEGER,
+    challenges_tkl INTEGER,
+    challenges_att INTEGER,
+    challenges_tkl_pct FLOAT,
+    challenges_lost INTEGER, -- num times dribbled past by an opposing player
+    -- pressures_press INTEGER NOT NULL, -- num times applying pressure
+    -- pressures_succ INTEGER NOT NULL,
+    -- pressures_pct FLOAT, -- successful pressure pct
+    -- pressures_def_3rd INTEGER NOT NULL,
+    -- pressures_mid_3rd INTEGER NOT NULL,
+    -- pressures_att_3rd INTEGER NOT NULL,
+    blocks_blocks INTEGER,
+    blocks_sh INTEGER,
+    -- blocks_shsv INTEGER NOT NULL, -- nunmber of times blocking a shot that was on target
+    blocks_pass INTEGER,
+    interceptions INTEGER, 
+    tkl_plus_int INTEGER,
+    clr INTEGER,
+    err INTEGER, -- mistakes leading to an opponent shot
     PRIMARY KEY(season, team, first_name, last_name)
 );
 
@@ -997,30 +1005,28 @@ CREATE TABLE player_possesion (
     pos TEXT NOT NULL,
     age TEXT NOT NULL,
     full_90s FLOAT NOT NULL,
-    touches_touches INTEGER NOT NULL,
-    touches_def_pen INTEGER NOT NULL, -- defensive touches in the defensive penalty area
-    touches_def_3rd INTEGER NOT NULL,
-    touches_mid_3rd INTEGER NOT NULL,
-    touches_att_3rd INTEGER NOT NULL,
-    touches_att_pen INTEGER NOT NULL,
-    touches_live INTEGER NOT NULL,
-    dribbles_live INTEGER NOT NULL,
-    dribbles_att INTEGER NOT NULL,
-    dribbles_succ INT,
-    dribbles_succ_pct FLOAT,
-    dribbles_num_pl INTEGER NOT NULL,
-    dribbles_megs INTEGER NOT NULL,
-    carries_carries INTEGER NOT NULL,
-    carries_totdist INTEGER NOT NULL,
-    carries_prgdist INTEGER NOT NULL,
-    carries_prog INTEGER NOT NULL,
-    carries_final_third INTEGER NOT NULL,
-    carries_cpa INTEGER NOT NULL, -- carries into the pen area
-    carries_mis INTEGER NOT NULL, -- miscontrols
-    receiving_targ INTEGER NOT NULL,
-    receiving_rec INTEGER NOT NULL,
-    receiving_rec_pct FLOAT,
-    receiving_prog INTEGER NOT NULL, -- progressive passes recieved
+    touches_touches INTEGER,
+    touches_def_pen INTEGER, -- defensive touches in the defensive penalty area
+    touches_def_3rd INTEGER,
+    touches_mid_3rd INTEGER,
+    touches_att_3rd INTEGER,
+    touches_att_pen INTEGER,
+    touches_live INTEGER,
+    take_ons_att INTEGER,
+    take_ons_succ INT,
+    take_ons_succ_pct FLOAT,
+    take_ons_tkld INTEGER,
+    take_ons_tkld_pct INTEGER,
+    carries_carries INTEGER,
+    carries_totdist INTEGER,
+    carries_prgdist INTEGER,
+    carries_prgc INTEGER,
+    carries_final_third INTEGER,
+    carries_cpa INTEGER, -- carries into the pen area
+    carries_mis INTEGER, -- miscontrols
+    carries_dis INTEGER,
+    receiving_rec INTEGER,
+    receiving_prgr INTEGER, -- progressive passes recieved
     PRIMARY KEY(season, team, first_name, last_name)
 );
 
@@ -1075,30 +1081,31 @@ CREATE TABLE player_miscellaneous_stats (
     performance_crs INTEGER NOT NULL,
     performance_int INTEGER NOT NULL,
     performance_tklw INTEGER NOT NULL,
-    performance_pkwon INTEGER NOT NULL,
-    performance_pkcon INTEGER NOT NULL,
+    performance_pkwon INTEGER,
+    performance_pkcon INTEGER,
     performance_og INTEGER NOT NULL, -- own goals
-    performance_recov INTEGER NOT NULL, -- num loose balls recovered
-    aerial_duels_won INTEGER NOT NULL,
-    aerial_duels_lost INTEGER NOT NULL,
+    performance_recov INTEGER, -- num loose balls recovered
+    aerial_duels_won INTEGER,
+    aerial_duels_lost INTEGER,
     aerial_duels_won_pct FLOAT,
     PRIMARY KEY(season, team, first_name, last_name)
 );
 
 CREATE TABLE championship_player_standard_stats (
     season TEXT NOT NULL,
-    team TEXT NOT NULL,
+	team TEXT NOT NULL,
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
-    nation TEXT NOT NULL,
+    nation TEXT,
     pos TEXT NOT NULL,
-    age INT NOT NULL,
+    age TEXT NOT NULL, 
     playing_time_mp INTEGER NOT NULL,
     playing_time_starts INTEGER NOT NULL,
     playing_time_min TEXT NOT NULL,
     playing_time_full_90s FLOAT NOT NULL,
     performance_gls INTEGER NOT NULL,
     performance_ast INTEGER NOT NULL,
+    performance_g_plus_a INTEGER NOT NULL,
     performance_g_minus_pk INTEGER NOT NULL,
     performance_pk INTEGER NOT NULL, -- penalties scored
     performance_pkatt INTEGER NOT NULL,
@@ -1108,7 +1115,19 @@ CREATE TABLE championship_player_standard_stats (
     per_90_minutes_ast FLOAT,
     per_90_minutes_g_plus_a FLOAT,
     per_90_minutes_g_minus_pk FLOAT,
-    per_90_minutes_g_plus_a_minus_pk FLOAT
+    per_90_minutes_g_plus_a_minus_pk FLOAT,
+    expected_xg FLOAT NOT NULL,
+    expected_npxg FLOAT NOT NULL,
+    expected_xag FLOAT NOT NULL,
+    expected_npxg_plus_xag FLOAT NOT NULL,
+    progression_prgc INTEGER NOT NULL,
+    progression_prgp INTEGER NOT NULL,
+    progression_prgr INTEGER NOT NULL,
+    per_90_minutes_xg FLOAT,
+    per_90_minutes_xag FLOAT,
+    per_90_minutes_xg_plus_xag FLOAT,
+    per_90_minutes_npxg FLOAT,
+    per_90_minutes_npxg_plus_xag FLOAT,
     PRIMARY KEY(season, team, first_name, last_name)
 );
 
@@ -1125,7 +1144,11 @@ CREATE TABLE championship_league_table (
     gd TEXT NOT NULL,
     pts INTEGER NOT NULL,
     pts_per_mp FLOAT,
-    attendance INTEGER,
+    xg FLOAT NOT NULL,
+    xga FLOAT NOT NULL,
+    xgd FLOAT NOT NULL,
+    xgd_per_90 FLOAT,
+    attendance TEXT,
     top_team_scorer TEXT,
     goalkeeper TEXT,
     notes TEXT,
@@ -1139,4 +1162,10 @@ CREATE TABLE fpl_fbref_mapping (
     fpl_second_name TEXT,
     season TEXT,
     PRIMARY KEY(fbref_first_name, fbref_last_name, fpl_first_name, fpl_second_name, season)
+);
+
+CREATE TABLE season_rank (
+    season TEXT,
+    rank INT,
+    primary key (season, rank)
 );

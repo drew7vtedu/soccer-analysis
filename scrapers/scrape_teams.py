@@ -77,6 +77,9 @@ class TeamScraper(Scraper):
         if 'attendance' in result.columns:
             result['attendance'] = result['attendance'].apply(lambda x: self.string_num_to_int(x))
 
+        if 'last_5' in result.columns:
+            result.drop(columns='last_5', inplace=True)
+
         return result
 
     def main(self):
@@ -85,7 +88,7 @@ class TeamScraper(Scraper):
         """
         for season in self.config['seasons'].keys():
             self.scrape_league(self.config['seasons'][season], season, self.args.update_db)
-            time.sleep(60)
+            time.sleep(self.wait_time)
         
 
 

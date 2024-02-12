@@ -36,7 +36,7 @@ class ChampionshipPlayerScraper(PlayerScraper):
             headers = self._get_all_headers_(team_soup)
             for i in range(len(self.table_names)):
                 self.scrape_teams_helper(season, team, tables[i], headers[i], self.table_names[i], update_db)
-            time.sleep(60)
+            time.sleep(30)
 
     def main(self):
         if self.args.use_cached_data:

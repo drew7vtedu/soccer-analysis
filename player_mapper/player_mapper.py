@@ -306,7 +306,6 @@ class PlayerMapper:
         Match players between 2 dataframes
         """
         fpl_df = fpl_df.loc[fpl_df.total_points > 0]
-        pdb.set_trace()
         df = fbref_df.merge(fpl_df, how='left', left_on=['season', 'first_name', 'last_name'], right_on=['season', 'first_name', 'second_name'])
         matches = fbref_df.merge(fpl_df, how='inner', left_on=['season', 'first_name', 'last_name'], right_on=['season', 'first_name', 'second_name'])
         # matches have the same first name and columns must be renamed and reordered
@@ -337,7 +336,6 @@ class PlayerMapper:
         matches = pd.concat([matches, self._format_match_df_(stripped_matches)]).reset_index(drop=True)
 
         remainder = df_stripped.loc[df_stripped.second_name.isna()].copy()
-        pdb.set_trace()
         remainder.drop(columns=[x for x in remainder.columns if x not in ['first_name_x', 'last_name', 'season']], inplace=True)
         remainder.rename(mapper={'first_name_x': 'first_name'}, axis=1, inplace=True)
 
@@ -445,10 +443,9 @@ class PlayerMapper:
 
         remainder = remainder.loc[~remainder.index.isin(drop_indexes)]
         if len(remainder) != 0:
-            print(f'Warning: {len(remainder)}Unmatched players remain')
+            print(f'Warning: {len(remainder)} Unmatched players remain')
             print(remainder)
 
-        pdb.set_trace()
         
         return matches
                     

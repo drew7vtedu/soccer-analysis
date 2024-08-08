@@ -22,7 +22,7 @@ class PlayerMapper:
         WHERE playing_time_min::FLOAT::INT > 0
         """
         self.config = util.load_config(self.args.config_path)
-        self.sql_conn_str = f"postgresql+psycopg2://{self.config['sql_user']}:{self.config['sql_password']}@localhost:{self.config['sql_port']}/premier_league_data"
+        self.sql_conn_str = f"postgresql+psycopg2://{self.config['sql_username']}:{self.config['sql_password']}@localhost:{self.config['sql_port']}/premier_league_data"
         engine = create_engine(self.sql_conn_str)
         with engine.connect() as conn:
             self.fbref_data = pd.read_sql(self.fbref_data_query, conn)
@@ -51,7 +51,7 @@ class PlayerMapper:
         dir = os.listdir(load_path)
         csvs = [x for x in dir if '.csv' in x]
         for season in csvs:
-            season_str = season[20:-4]
+            season_str = season[-9:-4]
             df = pd.read_csv(load_path+'/'+season)
             df['season'] = season_str.replace('_', '/')
             fpl_df = pd.concat([fpl_df, df])

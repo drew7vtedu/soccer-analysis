@@ -33,7 +33,8 @@ class Scraper:
         'miscellaneous_stats'
         ]
         self.config = util.load_config(self.args.config_path)
-        self.sql_conn_str = f"postgresql+psycopg2://{self.config['sql_user']}:{self.config['sql_password']}@localhost:{self.config['sql_port']}/premier_league_data"
+        self.sql_conn_str = f"postgresql+psycopg2://{self.config['sql_username']}:{self.config['sql_password']}@localhost:{self.config['sql_port']}/premier_league_data"
+        # self.sql_conn_str = f"postgresql+psycopg2:///{self.config['sql_username']}@localhost:{self.config['sql_port']}/premier_league_data"
         self.raw_data_path = 'data/raw/'
         self.proc_data_path = 'data/processed/'
         self.wait_time = 30 # seconds to wait between scraping tables

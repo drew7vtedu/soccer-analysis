@@ -201,7 +201,7 @@ CREATE TABLE squad_advanced_goalkeeping (
     launched_cmp INTEGER NOT NULL,
     launched_att INTEGER NOT NULL,
     launched_cmp_pct FLOAT NOT NULL,
-    passes_att INTEGER NOT NULL,
+    passes_att_gk INTEGER NOT NULL,
     passes_thr INTEGER NOT NULL,
     passes_launch_pct FLOAT NOT NULL,
     passes_avglen FLOAT,
@@ -234,7 +234,7 @@ CREATE TABLE opponent_stats_squad_advanced_goalkeeping (
     launched_cmp INTEGER NOT NULL,
     launched_att INTEGER NOT NULL,
     launched_cmp_pct FLOAT NOT NULL,
-    passes_att INTEGER NOT NULL,
+    passes_att_gk INTEGER NOT NULL,
     passes_thr INTEGER NOT NULL,
     passes_launch_pct FLOAT NOT NULL,
     passes_avglen FLOAT NOT NULL,
@@ -321,8 +321,8 @@ CREATE TABLE squad_passing (
     long_cmp_pct FLOAT NOT NULL,
     ast INTEGER NOT NULL,
     xag FLOAT NOT NULL,
-    xa FLOAT NOT NULL,
-    a_minus_xag FLOAT NOT NULL,
+    expected_xa FLOAT NOT NULL,
+    expected_a_minus_xag FLOAT NOT NULL,
     kp INTEGER NOT NULL, --key passes
     final_third INTEGER NOT NULL, --does not include set pieces
     ppa INTEGER NOT NULL, --completed passes into the penalty area not including set pieces
@@ -352,7 +352,8 @@ CREATE TABLE opponent_stats_squad_passing (
     long_cmp_pct FLOAT NOT NULL,
     ast INTEGER NOT NULL,
     xag FLOAT NOT NULL,
-    a_minus_xag FLOAT NOT NULL,
+    expected_xa FLOAT NOT NULL,
+    expected_a_minus_xag FLOAT NOT NULL,
     kp INTEGER NOT NULL, --key passes
     final_third INTEGER NOT NULL, --does not include set pieces
     ppa INTEGER NOT NULL, --completed passes into the penalty area not including set pieces
@@ -887,8 +888,8 @@ CREATE TABLE player_passing (
     long_cmp_pct FLOAT,
     ast INTEGER,
     xag FLOAT,
-    xa FLOAT,
-    a_minus_xag FLOAT,
+    expected_xa FLOAT,
+    expected_a_minus_xag FLOAT,
     kp INTEGER, --key passes
     final_third INTEGER, --does not include set pieces
     ppa INTEGER, --completed passes into the penalty area not including set pieces

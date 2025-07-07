@@ -37,7 +37,7 @@ class Scraper:
         # self.sql_conn_str = f"postgresql+psycopg2:///{self.config['sql_username']}@localhost:{self.config['sql_port']}/premier_league_data"
         self.raw_data_path = 'data/raw/'
         self.proc_data_path = 'data/processed/'
-        self.wait_time = 30 # seconds to wait between scraping tables
+        self.wait_time = 7 # seconds to wait between scraping tables
 
     @staticmethod
     def init_command_line_args():

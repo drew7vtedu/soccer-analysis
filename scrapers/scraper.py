@@ -10,6 +10,7 @@ import pdb
 from pathlib import Path
 import sys
 from sqlalchemy import create_engine
+import time
 
 sys.path.append('.')
 import util_funcs as util
@@ -37,7 +38,12 @@ class Scraper:
         # self.sql_conn_str = f"postgresql+psycopg2:///{self.config['sql_username']}@localhost:{self.config['sql_port']}/premier_league_data"
         self.raw_data_path = 'data/raw/'
         self.proc_data_path = 'data/processed/'
-        self.wait_time = 7 # seconds to wait between scraping tables
+        self.wait_time = 60 # seconds to wait between scraping tables
+        self.request_batch_start_time = time.time()
+        self.requests_per_batch = 9  # Actual limit is 10, padding to avoid rate limit
+        self.request_batch_length = 60
+        self.current_requests_in_batch = 0
+        self.retry_time = 60 * 10
 
     @staticmethod
     def init_command_line_args():

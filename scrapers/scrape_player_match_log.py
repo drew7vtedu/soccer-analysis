@@ -75,7 +75,14 @@ class PlayerMatchLogScraper(Scraper):
         """
         print(f"{season}, {team}, {player_name}")
         match_log_soup = self._request_fbref_(self.fbref_base_string+link)
-        match_log_table_soup = match_log_soup.find_all('tbody')[0]
+        try:
+            match_log_table_soup = match_log_soup.find_all('tbody')[0]
+        except IndexError as e:
+            print(f"Could not create table from soup {match_log_soup}")
+            print(f"waiting {round(self.retry_time / 60, 1)} minutes before retrying")
+            time.sleep(self.retry_time)
+            match_log_soup = self._request_fbref_(self.fbref_base_string+link)
+            match_log_table_soup = match_log_soup.find_all('tbody')[0]
         match_log_table_headers = self._get_all_headers_(match_log_soup)[0]
         
         table = self._scrape_table_(match_log_table_soup, match_log_table_headers)
@@ -125,7 +132,13 @@ class PlayerMatchLogScraper(Scraper):
             standard_stats_table_soup = team_soup.find_all('tbody')[0]
             standard_stats_table_headers = self._get_all_headers_(team_soup)[0]
             standard_stats_table = self._scrape_table_(standard_stats_table_soup, standard_stats_table_headers)
-            filtered_table = standard_stats_table.loc[standard_stats_table["mp"].astype(int) > 0]
+            if "mp" in standard_stats_table.columns:
+                filter_col = "mp"
+            elif "playing_time_mp" in standard_stats_table.columns:
+                filter_col = "playing_time_mp"
+            else:
+                raise ValueError(f"No column in {standard_stats_table.columns} was identified to filter by")
+            filtered_table = standard_stats_table.loc[standard_stats_table[filter_col].astype(int) > 0]
             player_urls = self.scrape_players_and_urls(team_soup)
             player_urls = {k: v for k, v in player_urls.items() if k in filtered_table["player"].values}
             for player_name, player_link in player_urls.items():

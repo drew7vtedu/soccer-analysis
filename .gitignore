@@ -131,3 +131,6 @@ dmypy.json
 # Things I added
 notebooks/*
 data/*
+_config_.yaml
+activate_venv.sh
+misc/
